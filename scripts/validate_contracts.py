@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 QFEN_RE = re.compile(r"^[A-Da-d.]{4}/[A-Da-d.]{4}/[A-Da-d.]{4}/[A-Da-d.]{4}$")
+SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$")
 
 
 def fail(message: str) -> None:
@@ -56,11 +57,22 @@ def validate_policy(policy: Any) -> None:
         seen.add(key)
 
 
-def validate_selfplay_row(record: Any) -> None:
+def validate_selfplay_row(
+    record: Any, expected_schema: str, expected_contract_version: str | None
+) -> None:
     if not isinstance(record, dict):
         fail("row must be a JSON object")
-    if record.get("schema") != "selfplay.v1":
-        fail("schema must be selfplay.v1")
+    if record.get("schema") != expected_schema:
+        fail(f"schema must be {expected_schema}")
+    contract_version = record.get("contract_version")
+    if contract_version is not None:
+        if not isinstance(contract_version, str):
+            fail("contract_version must be a string")
+        if expected_contract_version is not None and contract_version != expected_contract_version:
+            fail(
+                "contract_version must match contracts release "
+                f"{expected_contract_version}"
+            )
 
     game_id = expect_int(record, "game_id")
     ply = expect_int(record, "ply")
@@ -86,7 +98,9 @@ def validate_json_file(path: Path) -> None:
         json.load(handle)
 
 
-def validate_jsonl_file(path: Path) -> int:
+def validate_jsonl_file(
+    path: Path, expected_schema: str, expected_contract_version: str | None
+) -> int:
     rows = 0
     with path.open(encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
@@ -95,7 +109,11 @@ def validate_jsonl_file(path: Path) -> int:
                 continue
             try:
                 record = json.loads(stripped)
-                validate_selfplay_row(record)
+                validate_selfplay_row(
+                    record,
+                    expected_schema=expected_schema,
+                    expected_contract_version=expected_contract_version,
+                )
             except Exception as exc:
                 fail(f"{path}:{line_number}: {exc}")
             rows += 1
@@ -114,6 +132,76 @@ def expand_globs(patterns: list[str]) -> list[Path]:
     return sorted(set(paths))
 
 
+def validate_manifest(
+    manifest_path: Path, version_path: Path, expected_release: str | None
+) -> tuple[str, str | None]:
+    if not manifest_path.exists():
+        return "selfplay.v1", expected_release
+
+    with manifest_path.open(encoding="utf-8") as handle:
+        manifest = json.load(handle)
+    if not isinstance(manifest, dict):
+        fail(f"{manifest_path}: manifest must be a JSON object")
+
+    release_version = manifest.get("release_version")
+    if not isinstance(release_version, str) or not SEMVER_RE.match(release_version):
+        fail(f"{manifest_path}: release_version must be SemVer")
+    if expected_release is not None and release_version != expected_release:
+        fail(
+            f"{manifest_path}: release_version {release_version} does not match "
+            f"expected release {expected_release}"
+        )
+
+    if version_path.exists():
+        version = version_path.read_text(encoding="utf-8").strip()
+        if version != release_version:
+            fail(
+                f"{version_path}: version {version} does not match "
+                f"{manifest_path} release_version {release_version}"
+            )
+
+    contracts = manifest.get("contracts")
+    if not isinstance(contracts, dict) or not contracts:
+        fail(f"{manifest_path}: contracts must be a non-empty object")
+
+    base_dir = manifest_path.parent
+    selfplay_schema = "selfplay.v1"
+    for name, contract in contracts.items():
+        if not isinstance(contract, dict):
+            fail(f"{manifest_path}: contract {name} must be an object")
+        contract_id = contract.get("id")
+        major = contract.get("major")
+        docs = contract.get("docs")
+        schema = contract.get("schema")
+        if not isinstance(contract_id, str):
+            fail(f"{manifest_path}: contract {name}.id must be a string")
+        if not isinstance(major, int) or major < 1:
+            fail(f"{manifest_path}: contract {name}.major must be positive")
+        if not contract_id.endswith(f".v{major}"):
+            fail(
+                f"{manifest_path}: contract {name}.id must end with .v{major}"
+            )
+        if not isinstance(docs, str) or not (base_dir / docs).exists():
+            fail(f"{manifest_path}: contract {name}.docs must reference a file")
+        if schema is not None:
+            if not isinstance(schema, str):
+                fail(f"{manifest_path}: contract {name}.schema must be string or null")
+            schema_path = base_dir / schema
+            if not schema_path.exists():
+                fail(f"{manifest_path}: contract {name}.schema file is missing")
+            schema_text = schema_path.read_text(encoding="utf-8")
+            if contract_id not in schema_text:
+                fail(
+                    f"{manifest_path}: contract {name}.schema does not mention "
+                    f"{contract_id}"
+                )
+        if name == "selfplay":
+            selfplay_schema = contract_id
+
+    print(f"validated manifest: {manifest_path} ({release_version})")
+    return selfplay_schema, release_version
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -128,9 +216,27 @@ def main() -> int:
         default=[],
         help="Glob for selfplay.v1 JSONL fixtures.",
     )
+    parser.add_argument(
+        "--manifest",
+        default="contracts.json",
+        help="Contracts manifest path. Skipped when the file is absent.",
+    )
+    parser.add_argument(
+        "--version-file",
+        default="VERSION",
+        help="Version file compared to the manifest when present.",
+    )
+    parser.add_argument(
+        "--expected-release",
+        default=None,
+        help="Expected contracts SemVer release.",
+    )
     args = parser.parse_args()
 
     try:
+        expected_schema, expected_contract_version = validate_manifest(
+            Path(args.manifest), Path(args.version_file), args.expected_release
+        )
         schema_paths = expand_globs(args.schema_glob)
         fixture_paths = expand_globs(args.fixture_glob)
 
@@ -140,7 +246,11 @@ def main() -> int:
 
         total_rows = 0
         for path in fixture_paths:
-            rows = validate_jsonl_file(path)
+            rows = validate_jsonl_file(
+                path,
+                expected_schema=expected_schema,
+                expected_contract_version=expected_contract_version,
+            )
             total_rows += rows
             print(f"validated fixture: {path} ({rows} rows)")
 
@@ -155,4 +265,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -1,0 +1,57 @@
+{
+  "$schema": "./schemas/contracts-manifest-v1.schema.json",
+  "manifest_schema": "contracts-manifest.v1",
+  "release_version": "1.0.0",
+  "status": "draft",
+  "contracts": {
+    "qfen": {
+      "id": "qfen.v1",
+      "major": 1,
+      "schema": "schemas/qfen-v1.schema.json",
+      "docs": "docs/game-state.md"
+    },
+    "bitboard": {
+      "id": "bitboard.v1",
+      "major": 1,
+      "schema": "schemas/bitboard-v1.schema.json",
+      "docs": "docs/game-state.md"
+    },
+    "action_index": {
+      "id": "action-index.v1",
+      "major": 1,
+      "schema": null,
+      "docs": "docs/game-state.md"
+    },
+    "selfplay": {
+      "id": "selfplay.v1",
+      "major": 1,
+      "schema": "schemas/selfplay-v1.schema.json",
+      "docs": "docs/selfplay-v1.md",
+      "fixture_glob": "fixtures/selfplay/*.jsonl"
+    },
+    "tensor_board": {
+      "id": "tensor-board.v1",
+      "major": 1,
+      "schema": null,
+      "docs": "docs/storage-representations.md"
+    },
+    "arrow_parquet_selfplay": {
+      "id": "arrow-parquet-selfplay.v1",
+      "major": 1,
+      "schema": "schemas/arrow-parquet-selfplay-v1.json",
+      "docs": "docs/storage-representations.md"
+    }
+  },
+  "implementation_expectations": {
+    "python": {
+      "package": "quantik-core",
+      "recommended_constant": "SUPPORTED_CONTRACTS",
+      "minimum_expected_contract_release": "1.0.0"
+    },
+    "rust": {
+      "crate": "quantik-core-rust",
+      "recommended_constant": "SUPPORTED_CONTRACTS",
+      "minimum_expected_contract_release": "1.0.0"
+    }
+  }
+}

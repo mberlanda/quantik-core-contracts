@@ -10,6 +10,10 @@ inputs:
   consumer-command:
     description: Shell command that reads the artifact.
     required: true
+  expected-release:
+    description: Expected contracts SemVer release, for example 1.0.0.
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
@@ -21,7 +25,10 @@ runs:
       run: |
         test -s "${{ inputs['artifact-path'] }}"
         python "${{ github.action_path }}/../../scripts/validate_contracts.py" \
-          --fixture-glob "${{ inputs['artifact-path'] }}"
+          --fixture-glob "${{ inputs['artifact-path'] }}" \
+          ${EXPECTED_RELEASE_ARG}
+      env:
+        EXPECTED_RELEASE_ARG: ${{ inputs['expected-release'] != '' && format('--expected-release {0}', inputs['expected-release']) || '' }}
     - name: Run consumer
       shell: bash
       run: ${{ inputs['consumer-command'] }}

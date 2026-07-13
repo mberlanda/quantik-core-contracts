@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mberlanda/quantik-core-contracts/schemas/contracts-manifest-v1.schema.json",
+  "title": "Quantik contracts manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifest_schema", "release_version", "status", "contracts"],
+  "properties": {
+    "manifest_schema": {
+      "const": "contracts-manifest.v1"
+    },
+    "release_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "stable", "deprecated"]
+    },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "major", "schema", "docs"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]*\\.v[0-9]+$"
+          },
+          "major": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "schema": {
+            "type": ["string", "null"]
+          },
+          "docs": {
+            "type": "string"
+          },
+          "fixture_glob": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "implementation_expectations": {
+      "type": "object"
+    }
+  }
+}

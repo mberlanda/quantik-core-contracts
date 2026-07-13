@@ -10,6 +10,7 @@ The canonical fixture representation is JSONL: one JSON object per line.
 ```json
 {
   "schema": "selfplay.v1",
+  "contract_version": "1.0.0",
   "game_id": 0,
   "ply": 0,
   "qfen": "..../..../..../....",
@@ -24,6 +25,7 @@ The canonical fixture representation is JSONL: one JSON object per line.
 Field rules:
 
 - `schema` must be `selfplay.v1`.
+- `contract_version`, when present, must match `contracts.json.release_version`.
 - `game_id` is a non-negative integer.
 - `ply` is a non-negative integer.
 - `qfen` must satisfy `qfen.v1`.
@@ -83,4 +85,3 @@ Readers must reject:
 
 Readers may ignore unknown optional fields if the `schema` remains
 `selfplay.v1`.
-
