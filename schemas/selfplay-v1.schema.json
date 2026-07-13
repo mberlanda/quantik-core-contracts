@@ -17,6 +17,10 @@
     "schema": {
       "const": "selfplay.v1"
     },
+    "contract_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+    },
     "game_id": {
       "type": "integer",
       "minimum": 0
@@ -63,4 +67,3 @@
     }
   }
 }
-

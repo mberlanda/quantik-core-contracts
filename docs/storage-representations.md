@@ -2,6 +2,7 @@
 
 Quantik data has multiple access patterns. No single storage format is optimal
 for every job, so this repository defines when each format is appropriate.
+The supported format IDs and release version are listed in `contracts.json`.
 
 ## JSONL
 
@@ -195,4 +196,3 @@ Decision:
 
 Tensor stores are derived artifacts. They must be reproducible from the
 contracted JSONL/Arrow/Parquet representation.
-

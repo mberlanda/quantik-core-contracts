@@ -21,17 +21,22 @@ must conform to the contracts documented here.
 
 ## Contract Stability
 
-Contracts use explicit version names such as `selfplay.v1`. Additive fields are
-allowed only when existing readers can ignore them safely. Breaking changes
-must introduce a new contract version.
+This repository has one SemVer release in `VERSION` and
+`contracts.json.release_version`. Individual wire formats use stable contract
+IDs such as `selfplay.v1`. Additive fields are allowed only when existing
+readers can ignore them safely. Breaking changes must introduce a new contract
+ID such as `selfplay.v2`.
 
 The current baseline is:
 
+- contracts release `0.1.0`
 - `qfen.v1`
 - `bitboard.v1`
 - `action-index.v1`
 - `selfplay.v1`
 - `tensor-board.v1`
+
+See [docs/versioning.md](docs/versioning.md) for the full versioning model.
 
 ## Repository Layout
 
@@ -42,6 +47,8 @@ fixtures/                Golden fixtures used by implementations and CI
 scripts/                 Validation helpers with no third-party dependency
 actions/                 Reusable composite GitHub Actions
 .github/workflows/       CI and reusable workflows
+contracts.json           Machine-readable contract/version manifest
+VERSION                  SemVer release of this contract set
 ```
 
 ## Using The Contracts From Another Repository
@@ -54,9 +61,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: mberlanda/quantik-core-contracts/actions/validate-contracts@main
+      - uses: mberlanda/quantik-core-contracts/actions/validate-contracts@v0.1.0
         with:
           fixture-glob: "tests/fixtures/**/*.jsonl"
+          expected-release: "0.1.0"
 ```
 
 Run an export/import smoke where one implementation produces a `selfplay.v1`
@@ -68,11 +76,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: mberlanda/quantik-core-contracts/actions/cross-language-smoke@main
+      - uses: mberlanda/quantik-core-contracts/actions/cross-language-smoke@v0.1.0
         with:
           artifact-path: "build/selfplay-smoke.jsonl"
           producer-command: "cargo run --bin quantik-selfplay -- --rows 8 --output build/selfplay-smoke.jsonl"
           consumer-command: "python -m quantik_core.ml_data build/selfplay-smoke.jsonl"
+          expected-release: "0.1.0"
 ```
 
 The exact producer/consumer commands are intentionally supplied by the caller
@@ -89,3 +98,14 @@ repository. This contracts repo validates the artifact in the middle.
   not the primary bulk ML storage format.
 - Dense tensor stores may be derived from Parquet/Arrow for training hot paths.
 
+## Library Version Alignment
+
+Python and Rust packages should expose both their own package/crate version and
+the contracts release they support. The recommended exported contract release is
+currently:
+
+```text
+0.1.0
+```
+
+The recommended supported contract IDs are listed in `contracts.json`.

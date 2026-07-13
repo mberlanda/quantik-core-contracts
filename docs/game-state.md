@@ -1,6 +1,8 @@
 # Game State Representation
 
 This document defines `qfen.v1`, `bitboard.v1`, and `action-index.v1`.
+These IDs are listed in `contracts.json`; incompatible changes must introduce a
+new major contract ID.
 
 ## Board Coordinates
 
@@ -130,4 +132,3 @@ There are exactly 64 action slots.
 
 When a row includes both `qfen` and `side_to_move`, validators must confirm that
 the side is consistent with the legal game state.
-

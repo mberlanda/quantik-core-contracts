@@ -9,6 +9,10 @@ inputs:
     description: Glob for selfplay.v1 JSONL fixtures.
     required: false
     default: "fixtures/**/*.jsonl"
+  expected-release:
+    description: Expected contracts SemVer release, for example 0.1.0.
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
@@ -17,4 +21,7 @@ runs:
       run: |
         python "${{ github.action_path }}/../../scripts/validate_contracts.py" \
           --schema-glob "${{ inputs['schema-glob'] }}" \
-          --fixture-glob "${{ inputs['fixture-glob'] }}"
+          --fixture-glob "${{ inputs['fixture-glob'] }}" \
+          ${EXPECTED_RELEASE_ARG}
+      env:
+        EXPECTED_RELEASE_ARG: ${{ inputs['expected-release'] != '' && format('--expected-release {0}', inputs['expected-release']) || '' }}
