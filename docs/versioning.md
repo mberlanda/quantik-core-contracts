@@ -10,7 +10,7 @@ contracts repository.
 Examples:
 
 ```text
-0.1.0
+1.0.0
 1.0.0
 1.1.0
 2.0.0
@@ -43,7 +43,7 @@ arrow-parquet-selfplay.v1
 The suffix `v1` is the wire-format major version. It changes only when readers
 must implement a different model.
 
-The repository can move from `0.1.0` to `0.2.0` while still supporting
+The repository can move from `1.0.0` to `1.1.0` while still supporting
 `selfplay.v1`. A future incompatible self-play row would become `selfplay.v2`
 and require a major repository release.
 
@@ -69,7 +69,7 @@ Recommended Python shape:
 
 ```python
 SUPPORTED_CONTRACTS = {
-    "contracts_release": "0.1.0",
+    "contracts_release": "1.0.0",
     "qfen": "qfen.v1",
     "bitboard": "bitboard.v1",
     "action_index": "action-index.v1",
@@ -81,7 +81,7 @@ SUPPORTED_CONTRACTS = {
 Recommended Rust shape:
 
 ```rust
-pub const SUPPORTED_CONTRACTS_RELEASE: &str = "0.1.0";
+pub const SUPPORTED_CONTRACTS_RELEASE: &str = "1.0.0";
 pub const SUPPORTED_CONTRACTS: &[(&str, &str)] = &[
     ("qfen", "qfen.v1"),
     ("bitboard", "bitboard.v1"),
@@ -99,7 +99,7 @@ contracts release and wire contract IDs they support.
 Reusable Actions should pin a contracts repo ref:
 
 ```yaml
-- uses: mberlanda/quantik-core-contracts/actions/validate-contracts@v0.1.0
+- uses: mberlanda/quantik-core-contracts/actions/validate-contracts@v1.0.0
 ```
 
 During early development `@main` is acceptable, but release branches should pin
@@ -111,10 +111,9 @@ the fixture is intended to pin an exact repository release:
 ```json
 {
   "schema": "selfplay.v1",
-  "contract_version": "0.1.0"
+  "contract_version": "1.0.0"
 }
 ```
 
 When `contract_version` is present, validators must require it to match the
 manifest release.
-

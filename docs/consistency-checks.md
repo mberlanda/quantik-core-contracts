@@ -24,10 +24,10 @@ Workflow:
 Consumer repositories can validate their own generated fixtures with:
 
 ```yaml
-- uses: mberlanda/quantik-core-contracts/actions/validate-contracts@v0.1.0
+- uses: mberlanda/quantik-core-contracts/actions/validate-contracts@v1.0.0
   with:
     fixture-glob: "tests/fixtures/**/*.jsonl"
-    expected-release: "0.1.0"
+    expected-release: "1.0.0"
 ```
 
 This is intentionally dependency-light. It does not require `jsonschema`,
@@ -43,12 +43,12 @@ Consumer repositories can produce an artifact, validate it against
 `selfplay.v1`, and then feed it to another implementation:
 
 ```yaml
-- uses: mberlanda/quantik-core-contracts/actions/cross-language-smoke@v0.1.0
+- uses: mberlanda/quantik-core-contracts/actions/cross-language-smoke@v1.0.0
   with:
     artifact-path: "build/selfplay-smoke.jsonl"
     producer-command: "cargo run --bin quantik-selfplay -- --rows 8 --output build/selfplay-smoke.jsonl"
     consumer-command: "python -m quantik_core.ml_data build/selfplay-smoke.jsonl"
-    expected-release: "0.1.0"
+    expected-release: "1.0.0"
 ```
 
 The action performs:
