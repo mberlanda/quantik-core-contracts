@@ -1,0 +1,27 @@
+name: Quantik cross-language smoke
+description: Run a producer, validate a selfplay.v1 artifact, then run a consumer.
+inputs:
+  artifact-path:
+    description: Path to the selfplay.v1 JSONL artifact produced by the producer command.
+    required: true
+  producer-command:
+    description: Shell command that writes the artifact.
+    required: true
+  consumer-command:
+    description: Shell command that reads the artifact.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Run producer
+      shell: bash
+      run: ${{ inputs['producer-command'] }}
+    - name: Validate produced artifact
+      shell: bash
+      run: |
+        test -s "${{ inputs['artifact-path'] }}"
+        python "${{ github.action_path }}/../../scripts/validate_contracts.py" \
+          --fixture-glob "${{ inputs['artifact-path'] }}"
+    - name: Run consumer
+      shell: bash
+      run: ${{ inputs['consumer-command'] }}

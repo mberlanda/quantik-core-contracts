@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mberlanda/quantik-core-contracts/schemas/selfplay-v1.schema.json",
+  "title": "Quantik selfplay.v1 row",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema",
+    "game_id",
+    "ply",
+    "qfen",
+    "side_to_move",
+    "policy",
+    "value"
+  ],
+  "properties": {
+    "schema": {
+      "const": "selfplay.v1"
+    },
+    "game_id": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "ply": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "qfen": {
+      "$ref": "qfen-v1.schema.json"
+    },
+    "side_to_move": {
+      "type": "integer",
+      "enum": [0, 1]
+    },
+    "policy": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["shape", "position", "visits"],
+        "properties": {
+          "shape": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 15
+          },
+          "visits": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "value": {
+      "type": "number",
+      "enum": [-1.0, 1.0]
+    }
+  }
+}
+

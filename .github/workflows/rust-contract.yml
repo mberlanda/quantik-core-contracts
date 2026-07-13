@@ -1,0 +1,44 @@
+name: reusable-rust-contract
+
+on:
+  workflow_call:
+    inputs:
+      rust-toolchain:
+        type: string
+        required: false
+        default: stable
+      fixture-glob:
+        type: string
+        required: false
+        default: "tests/fixtures/**/*.jsonl"
+      smoke-command:
+        type: string
+        required: false
+        default: ""
+
+jobs:
+  rust-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+        with:
+          path: caller
+      - name: Checkout contracts repository
+        uses: actions/checkout@v4
+        with:
+          repository: mberlanda/quantik-core-contracts
+          path: contracts
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ inputs['rust-toolchain'] }}
+      - name: Validate caller fixtures
+        working-directory: caller
+        run: |
+          python3 ../contracts/scripts/validate_contracts.py \
+            --fixture-glob "${{ inputs['fixture-glob'] }}"
+      - name: Run caller smoke command
+        if: ${{ inputs['smoke-command'] != '' }}
+        working-directory: caller
+        run: ${{ inputs['smoke-command'] }}

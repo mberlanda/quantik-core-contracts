@@ -1,0 +1,44 @@
+name: reusable-python-contract
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        type: string
+        required: false
+        default: "3.13"
+      fixture-glob:
+        type: string
+        required: false
+        default: "tests/fixtures/**/*.jsonl"
+      smoke-command:
+        type: string
+        required: false
+        default: ""
+
+jobs:
+  python-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+        with:
+          path: caller
+      - name: Checkout contracts repository
+        uses: actions/checkout@v4
+        with:
+          repository: mberlanda/quantik-core-contracts
+          path: contracts
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs['python-version'] }}
+      - name: Validate caller fixtures
+        working-directory: caller
+        run: |
+          python ../contracts/scripts/validate_contracts.py \
+            --fixture-glob "${{ inputs['fixture-glob'] }}"
+      - name: Run caller smoke command
+        if: ${{ inputs['smoke-command'] != '' }}
+        working-directory: caller
+        run: ${{ inputs['smoke-command'] }}

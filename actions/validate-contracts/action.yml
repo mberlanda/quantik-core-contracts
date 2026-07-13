@@ -1,0 +1,20 @@
+name: Validate Quantik contracts
+description: Validate Quantik contract JSON files and selfplay.v1 JSONL fixtures.
+inputs:
+  schema-glob:
+    description: Glob for JSON schema/metadata files.
+    required: false
+    default: "schemas/**/*.json"
+  fixture-glob:
+    description: Glob for selfplay.v1 JSONL fixtures.
+    required: false
+    default: "fixtures/**/*.jsonl"
+runs:
+  using: composite
+  steps:
+    - name: Validate contract artifacts
+      shell: bash
+      run: |
+        python "${{ github.action_path }}/../../scripts/validate_contracts.py" \
+          --schema-glob "${{ inputs['schema-glob'] }}" \
+          --fixture-glob "${{ inputs['fixture-glob'] }}"

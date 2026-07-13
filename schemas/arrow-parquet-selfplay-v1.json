@@ -1,0 +1,19 @@
+{
+  "schema": "arrow-parquet-selfplay.v1",
+  "description": "Recommended Arrow/Parquet physical schema for bulk self-play data.",
+  "columns": [
+    { "name": "game_id", "type": "uint64", "required": true },
+    { "name": "ply", "type": "uint16", "required": true },
+    { "name": "side_to_move", "type": "uint8", "required": true },
+    { "name": "bitboards", "type": "fixed_size_list<uint16,8>", "required": true },
+    { "name": "policy_visits", "type": "fixed_size_list<uint32,64>", "required": true },
+    { "name": "value", "type": "int8", "required": true, "allowed": [-1, 1] },
+    { "name": "qfen", "type": "utf8", "required": false }
+  ],
+  "notes": [
+    "policy_visits uses action_index = shape * 16 + position.",
+    "qfen is optional in production but recommended for debug shards.",
+    "write Parquet in batches or shards; do not append one row at a time."
+  ]
+}
+

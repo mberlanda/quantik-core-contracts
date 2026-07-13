@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mberlanda/quantik-core-contracts/schemas/qfen-v1.schema.json",
+  "title": "Quantik qfen.v1",
+  "type": "string",
+  "pattern": "^[A-Da-d.]{4}/[A-Da-d.]{4}/[A-Da-d.]{4}/[A-Da-d.]{4}$"
+}
+
