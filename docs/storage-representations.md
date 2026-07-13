@@ -166,7 +166,8 @@ Weaknesses:
 Decision:
 
 SQLite is preferred for graph/index workflows, not as the main ML training
-corpus format.
+corpus format. For opening-book scale and storage tradeoffs, see
+[Opening Book Scale, Storage, and Proficiency Tradeoffs for Quantik](research/2026-07-13-opening-book-scale-and-storage.md).
 
 ## Tensor Stores
 
