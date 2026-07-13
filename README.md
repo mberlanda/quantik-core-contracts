@@ -51,6 +51,9 @@ contracts.json           Machine-readable contract/version manifest
 VERSION                  SemVer release of this contract set
 ```
 
+Start from [docs/README.md](docs/README.md) for a hypertext index of the
+contracts, research notes, and machine-readable schemas.
+
 ## Using The Contracts From Another Repository
 
 Validate committed fixtures:
