@@ -1,34 +1,37 @@
 {
   "schema": "game-result.v1",
-  "description": "Recommended Arrow/Parquet physical schema for completed Quantik head-to-head games.",
+  "description": "Arrow/Parquet physical schema for implemented completed Quantik head-to-head games.",
   "storage": "parquet",
+  "parquet_metadata": {
+    "physical_schema": "game-result.v1",
+    "logical_schema": "game-result.v1",
+    "logical_contract": "game-result.v1",
+    "contracts_release": "contracts.json.release_version",
+    "contract_version": "contracts.json.release_version"
+  },
   "columns": [
     { "name": "schema", "type": "utf8", "required": true },
     { "name": "contract_version", "type": "utf8", "required": true },
     { "name": "game_id", "type": "utf8", "required": true },
-    { "name": "started_at", "type": "timestamp or utf8", "required": true },
+    { "name": "started_at", "type": "utf8", "required": true },
     { "name": "p0_engine_kind", "type": "utf8", "required": true },
     { "name": "p0_engine_version", "type": "utf8", "required": true },
-    { "name": "p0_engine_checkpoint", "type": "utf8", "required": false },
     { "name": "p1_engine_kind", "type": "utf8", "required": true },
     { "name": "p1_engine_version", "type": "utf8", "required": true },
-    { "name": "p1_engine_checkpoint", "type": "utf8", "required": false },
-    { "name": "opening_book_id", "type": "utf8", "required": false },
-    { "name": "initial_position_key", "type": "fixed_size_binary[16] or utf8", "required": true },
-    { "name": "winner", "type": "int8", "required": true, "allowed": [0, 1] },
+    { "name": "initial_position_key", "type": "utf8", "required": true },
+    { "name": "winner", "type": "uint8", "required": true, "allowed": [0, 1] },
     { "name": "plies", "type": "uint16", "required": true },
     { "name": "terminal_reason", "type": "utf8", "required": true },
-    { "name": "seed", "type": "uint64", "required": false },
-    { "name": "time_budget_ms_per_move", "type": "uint32", "required": false },
-    { "name": "node_budget_per_move", "type": "uint64", "required": false },
     { "name": "move_action_indices", "type": "list<uint8>", "required": true },
-    { "name": "position_keys", "type": "list<fixed_size_binary[16]>", "required": false },
-    { "name": "hardware", "type": "utf8", "required": false },
     { "name": "run_id", "type": "utf8", "required": false }
   ],
   "notes": [
     "game-result.v1 is for completed games, not root search observations.",
     "Current Quantik contracts encode no draw outcome.",
+    "Parquet key/value metadata should include physical_schema, logical_schema, logical_contract, contracts_release, and contract_version.",
+    "physical_schema, logical_schema, and logical_contract must all be game-result.v1.",
+    "contracts_release and contract_version should match contracts.json.release_version for release artifacts.",
+    "The implemented v1 surface intentionally stores started_at and position keys as utf8 for Python/Rust parity.",
     "Use this data for H2H stats and Elo proxy estimation."
   ]
 }

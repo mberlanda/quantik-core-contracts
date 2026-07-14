@@ -13,31 +13,27 @@ fixtures and debug samples.
 schema: game-result.v1
 contract_version: 1.1.0
 game_id: string
-started_at: timestamp or ISO-8601 string
+started_at: ISO-8601 utf8 string
 p0_engine_kind: string
 p0_engine_version: string
 p1_engine_kind: string
 p1_engine_version: string
-initial_position_key: bytes or lowercase hex string
-winner: int8
+initial_position_key: lowercase hex string or other stable utf8 position key
+winner: uint8
 plies: uint16
 terminal_reason: string
 move_action_indices: list<uint8>
 ```
 
-Optional fields:
+Implemented optional fields:
 
 ```text
-p0_engine_checkpoint
-p1_engine_checkpoint
-opening_book_id
-seed
-time_budget_ms_per_move
-node_budget_per_move
-position_keys
-hardware
 run_id
 ```
+
+Checkpoint IDs, opening book IDs, seeds, budgets, position-key traces, and
+hardware metadata belong in future additive columns once both implementation
+stacks preserve them end to end.
 
 ## Winner
 
@@ -80,6 +76,24 @@ delta_elo = 400 * log10(S / (1 - S))
 Because current Quantik has no draws, `S` is simply wins divided by games.
 Aggregators should still record sample count and confidence intervals.
 
+## Parquet Metadata
+
+The implemented Parquet physical schema is the column set in
+`schemas/game-result-v1.json`. Parquet writers should also store file/table
+key-value metadata:
+
+```text
+physical_schema: game-result.v1
+logical_schema: game-result.v1
+logical_contract: game-result.v1
+contracts_release: 1.1.0
+contract_version: 1.1.0
+```
+
+The dependency-free manifest
+`fixtures/parquet/game-result-v1-metadata.json` mirrors this metadata and
+column order for CI checks that cannot import Arrow.
+
 ## Compatibility Rules
 
 Readers must reject:
@@ -94,7 +108,4 @@ Readers must reject:
 
 Readers may ignore:
 
-- optional hardware metadata,
-- optional position key trace,
-- optional opening book id,
-- optional seed.
+- future additive columns that are not required by the v1 physical schema.

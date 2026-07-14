@@ -1,39 +1,40 @@
 {
   "schema": "observation.v1",
-  "description": "Recommended Arrow/Parquet physical schema for Quantik engine observations.",
+  "description": "Arrow/Parquet physical schema for implemented Quantik engine observations.",
   "storage": "parquet",
+  "parquet_metadata": {
+    "physical_schema": "observation.v1",
+    "logical_schema": "observation.v1",
+    "logical_contract": "observation.v1",
+    "contracts_release": "contracts.json.release_version",
+    "contract_version": "contracts.json.release_version"
+  },
   "columns": [
     { "name": "schema", "type": "utf8", "required": true },
     { "name": "contract_version", "type": "utf8", "required": true },
     { "name": "run_id", "type": "utf8", "required": true },
     { "name": "row_id", "type": "uint64", "required": true },
-    { "name": "position_key", "type": "fixed_size_binary[16] or utf8", "required": true },
+    { "name": "position_key", "type": "utf8", "required": true },
     { "name": "ply", "type": "uint16", "required": true },
     { "name": "side_to_move", "type": "uint8", "required": true },
     { "name": "bitboards", "type": "fixed_size_list<uint16,8>", "required": true },
     { "name": "qfen", "type": "utf8", "required": false },
     { "name": "legal_action_mask", "type": "uint64", "required": true },
-    { "name": "engine_kind", "type": "dictionary utf8", "required": true },
-    { "name": "engine_checkpoint", "type": "utf8", "required": false },
+    { "name": "engine_kind", "type": "utf8", "required": true },
     { "name": "engine_version", "type": "utf8", "required": true },
-    { "name": "search_depth", "type": "uint16", "required": false },
-    { "name": "rollouts", "type": "uint32", "required": false },
-    { "name": "beam_width", "type": "uint16", "required": false },
-    { "name": "node_budget", "type": "uint64", "required": false },
-    { "name": "time_budget_ms", "type": "uint32", "required": false },
     { "name": "elapsed_ms", "type": "uint32", "required": true },
-    { "name": "seed", "type": "uint64", "required": false },
     { "name": "policy_visits", "type": "fixed_size_list<uint32,64>", "required": true },
-    { "name": "policy_priors", "type": "fixed_size_list<float32,64>", "required": false },
-    { "name": "root_q_values", "type": "fixed_size_list<float32,64>", "required": false },
-    { "name": "value", "type": "float32", "required": true },
-    { "name": "value_source", "type": "dictionary utf8", "required": true },
-    { "name": "source_confidence", "type": "float32", "required": true },
-    { "name": "principal_variation", "type": "list<uint8>", "required": false }
+    { "name": "value", "type": "float64", "required": true },
+    { "name": "value_source", "type": "utf8", "required": true },
+    { "name": "source_confidence", "type": "float64", "required": true }
   ],
   "notes": [
     "observation.v1 is bulk analytical data.",
     "Use Parquet for large observation and training datasets.",
+    "Parquet key/value metadata should include physical_schema, logical_schema, logical_contract, contracts_release, and contract_version.",
+    "physical_schema, logical_schema, and logical_contract must all be observation.v1.",
+    "contracts_release and contract_version should match contracts.json.release_version for release artifacts.",
+    "The implemented v1 surface intentionally stores position_key as utf8 and value/source_confidence as float64 for Python/Rust parity.",
     "policy_visits uses action_index = shape * 16 + position."
   ]
 }

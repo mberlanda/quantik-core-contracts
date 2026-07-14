@@ -30,7 +30,7 @@ schema: observation.v1
 contract_version: 1.1.0
 run_id: string
 row_id: uint64
-position_key: bytes or lowercase hex string
+position_key: lowercase hex string or other stable utf8 position key
 ply: uint16
 side_to_move: uint8
 bitboards: fixed_size_list<uint16, 8>
@@ -39,26 +39,20 @@ engine_kind: string
 engine_version: string
 elapsed_ms: uint32
 policy_visits: fixed_size_list<uint32, 64>
-value: float32
+value: float64
 value_source: string
-source_confidence: float32
+source_confidence: float64
 ```
 
-Optional fields:
+Implemented optional fields:
 
 ```text
 qfen
-engine_checkpoint
-search_depth
-rollouts
-beam_width
-node_budget
-time_budget_ms
-seed
-policy_priors: fixed_size_list<float32, 64>
-root_q_values: fixed_size_list<float32, 64>
-principal_variation: list<uint8>
 ```
+
+Budget fields, checkpoint IDs, priors, root Q-values, and principal variations
+belong in future additive columns once both implementation stacks preserve them
+end to end.
 
 ## Engine Kinds
 
@@ -124,6 +118,22 @@ heuristic
 
 ## Parquet Partitioning
 
+The implemented Parquet physical schema is the column set in
+`schemas/observation-v1.json`. Parquet writers should also store file/table
+key-value metadata:
+
+```text
+physical_schema: observation.v1
+logical_schema: observation.v1
+logical_contract: observation.v1
+contracts_release: 1.1.0
+contract_version: 1.1.0
+```
+
+The dependency-free manifest
+`fixtures/parquet/observation-v1-metadata.json` mirrors this metadata and
+column order for CI checks that cannot import Arrow.
+
 Recommended layout:
 
 ```text
@@ -155,6 +165,4 @@ Readers must reject:
 Readers may ignore:
 
 - optional QFEN,
-- optional priors,
-- optional root q-values,
-- optional principal variations.
+- future additive columns that are not required by the v1 physical schema.
