@@ -1,2 +1,2 @@
-{"schema":"selfplay.v1","contract_version":"1.0.0","game_id":0,"ply":0,"qfen":"..../..../..../....","side_to_move":0,"policy":[{"shape":0,"position":0,"visits":3},{"shape":1,"position":5,"visits":1}],"value":1.0}
-{"schema":"selfplay.v1","contract_version":"1.0.0","game_id":0,"ply":1,"qfen":"A.../..../..../....","side_to_move":1,"policy":[{"shape":0,"position":10,"visits":2},{"shape":1,"position":1,"visits":6}],"value":-1.0}
+{"schema":"selfplay.v1","contract_version":"1.1.0","game_id":0,"ply":0,"qfen":"..../..../..../....","side_to_move":0,"policy":[{"shape":0,"position":0,"visits":3},{"shape":1,"position":5,"visits":1}],"value":1.0}
+{"schema":"selfplay.v1","contract_version":"1.1.0","game_id":0,"ply":1,"qfen":"A.../..../..../....","side_to_move":1,"policy":[{"shape":0,"position":10,"visits":2},{"shape":1,"position":1,"visits":6}],"value":-1.0}
