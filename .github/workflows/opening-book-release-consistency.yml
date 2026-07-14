@@ -1,0 +1,103 @@
+name: opening-book-release-consistency
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-tag:
+        description: Optional shared release tag, for example v1.1.0. Defaults to latest contracts tag.
+        required: false
+        default: ""
+  schedule:
+    - cron: "37 4 * * *"
+
+jobs:
+  latest-tag-opening-book:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout contracts
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: quantik-core-contracts
+
+      - name: Resolve shared release tag
+        id: release-tag
+        working-directory: quantik-core-contracts
+        shell: bash
+        run: |
+          git fetch --tags --force
+          if [[ -n "${{ inputs['release-tag'] }}" ]]; then
+            tag="${{ inputs['release-tag'] }}"
+          else
+            tag="$(git tag --list 'v*' --sort=-v:refname | head -n 1)"
+          fi
+          test -n "$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          echo "Resolved release tag: $tag"
+
+      - name: Checkout Python library at shared tag
+        uses: actions/checkout@v4
+        with:
+          repository: mberlanda/quantik-core-py
+          ref: ${{ steps.release-tag.outputs.tag }}
+          path: quantik-core-py
+
+      - name: Checkout Rust library at shared tag
+        uses: actions/checkout@v4
+        with:
+          repository: mberlanda/quantik-core-rust
+          ref: ${{ steps.release-tag.outputs.tag }}
+          path: quantik-core-rust
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Python library from checked-out tag
+        working-directory: quantik-core-py
+        run: python -m pip install -e .
+
+      - name: Generate depth-4 opening book and summaries
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cd quantik-core-rust
+          scripts/generate_opening_book.sh search \
+            --depth 4 \
+            --db ../artifacts/depth4.sqlite \
+            --profile debug \
+            --quiet
+          scripts/inspect_opening_book.sh summary-json \
+            --db ../artifacts/depth4.sqlite \
+            --depth 4 \
+            --output ../artifacts/rust-summary.json \
+            --profile debug
+          cd ../quantik-core-py
+          python -m quantik_core.opening_book_summary \
+            --db ../artifacts/depth4.sqlite \
+            --depth 4 \
+            --output ../artifacts/python-summary.json
+
+      - name: Validate opening-book SQLite artifact and summaries
+        working-directory: quantik-core-contracts
+        run: |
+          python scripts/validate_opening_book_artifact.py \
+            --db ../artifacts/depth4.sqlite \
+            --rust-summary ../artifacts/rust-summary.json \
+            --python-summary ../artifacts/python-summary.json \
+            --expected-depth 4 \
+            --expected-release "${{ steps.release-tag.outputs.version }}"
+
+      - name: Upload generated consistency artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: opening-book-release-consistency-${{ steps.release-tag.outputs.tag }}
+          path: artifacts/
+          if-no-files-found: warn
