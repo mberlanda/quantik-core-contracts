@@ -1,0 +1,15 @@
+{
+  "schema": "opening-book-summary.v1",
+  "description": "Aggregate opening-book graph metrics used for Rust/Python consistency checks.",
+  "format": "json",
+  "required_fields": [
+    "schema",
+    "contract_version",
+    "depth",
+    "total_positions",
+    "terminal_positions",
+    "total_edges",
+    "per_depth"
+  ],
+  "per_depth_fields": ["depth", "positions", "terminal", "edges"]
+}

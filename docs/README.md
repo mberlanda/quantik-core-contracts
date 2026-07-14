@@ -13,6 +13,8 @@ resume work across sessions and to find the document that owns each decision.
   observation rows.
 - [Opening Book v1](opening-book-v1.md): canonical opening knowledge graph,
   value/policy aggregates, and human theory overlays.
+- [Opening Book Summary v1](opening-book-summary-v1.md): aggregate depth-book
+  metrics used for Rust/Python consistency checks.
 - [Observation v1](observation-v1.md): Parquet-oriented engine observation rows
   for MCTS, beam, minimax, and training pipelines.
 - [Game Result v1](game-result-v1.md): completed H2H games for Elo proxy,
@@ -40,6 +42,10 @@ resume work across sessions and to find the document that owns each decision.
 - [Opening Knowledge Data Preparation Next Steps](research/2026-07-13-opening-knowledge-data-preparation-next-steps.md):
   implementation sequence for turning generated positions, observations,
   search traces, and models into contracted artifacts.
+- [Opening Book Storage Follow-Up From Depth-7 Generation](research/2026-07-14-opening-book-storage-followup.md):
+  concrete contract and implementation lessons from the Rust depth-7 SQLite
+  book, including compact edges, action-preserving identity, resume semantics,
+  and probe artifacts.
 
 ## Machine-Readable Contracts
 
@@ -54,6 +60,8 @@ resume work across sessions and to find the document that owns each decision.
   recommended Arrow/Parquet physical schema for self-play data.
 - [`schemas/opening-book-v1.json`](../schemas/opening-book-v1.json):
   recommended SQLite source shape for opening-book graph artifacts.
+- [`schemas/opening-book-summary-v1.json`](../schemas/opening-book-summary-v1.json):
+  aggregate summary shape for cross-stack opening-book consistency checks.
 - [`schemas/observation-v1.json`](../schemas/observation-v1.json):
   recommended Parquet physical schema for engine observations.
 - [`schemas/game-result-v1.json`](../schemas/game-result-v1.json):

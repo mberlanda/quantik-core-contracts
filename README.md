@@ -29,13 +29,14 @@ ID such as `selfplay.v2`.
 
 The current baseline is:
 
-- contracts release `1.0.0`
+- contracts release `1.1.0`
 - `qfen.v1`
 - `bitboard.v1`
 - `action-index.v1`
 - `selfplay.v1`
 - `tensor-board.v1`
 - `opening-book.v1`
+- `opening-book-summary.v1`
 - `observation.v1`
 - `game-result.v1`
 - `model-checkpoint.v1`
@@ -71,7 +72,7 @@ jobs:
       - uses: mberlanda/quantik-core-contracts/actions/validate-contracts@v1.0.0
         with:
           fixture-glob: "tests/fixtures/**/*.jsonl"
-          expected-release: "1.0.0"
+          expected-release: "1.1.0"
 ```
 
 Run an export/import smoke where one implementation produces a `selfplay.v1`
@@ -88,7 +89,7 @@ jobs:
           artifact-path: "build/selfplay-smoke.jsonl"
           producer-command: "cargo run --bin quantik-selfplay -- --rows 8 --output build/selfplay-smoke.jsonl"
           consumer-command: "python -m quantik_core.ml_data build/selfplay-smoke.jsonl"
-          expected-release: "1.0.0"
+          expected-release: "1.1.0"
 ```
 
 The exact producer/consumer commands are intentionally supplied by the caller
@@ -112,7 +113,7 @@ the contracts release they support. The recommended exported contract release is
 currently:
 
 ```text
-1.0.0
+1.1.0
 ```
 
 The recommended supported contract IDs are listed in `contracts.json`.

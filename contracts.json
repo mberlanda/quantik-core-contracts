@@ -1,7 +1,7 @@
 {
   "$schema": "./schemas/contracts-manifest-v1.schema.json",
   "manifest_schema": "contracts-manifest.v1",
-  "release_version": "1.0.0",
+  "release_version": "1.1.0",
   "status": "draft",
   "contracts": {
     "qfen": {
@@ -47,6 +47,12 @@
       "schema": "schemas/opening-book-v1.json",
       "docs": "docs/opening-book-v1.md"
     },
+    "opening_book_summary": {
+      "id": "opening-book-summary.v1",
+      "major": 1,
+      "schema": "schemas/opening-book-summary-v1.json",
+      "docs": "docs/opening-book-summary-v1.md"
+    },
     "observation": {
       "id": "observation.v1",
       "major": 1,
@@ -70,12 +76,12 @@
     "python": {
       "package": "quantik-core",
       "recommended_constant": "SUPPORTED_CONTRACTS",
-      "minimum_expected_contract_release": "1.0.0"
+      "minimum_expected_contract_release": "1.1.0"
     },
     "rust": {
       "crate": "quantik-core-rust",
       "recommended_constant": "SUPPORTED_CONTRACTS",
-      "minimum_expected_contract_release": "1.0.0"
+      "minimum_expected_contract_release": "1.1.0"
     }
   }
 }

@@ -1,0 +1,42 @@
+name: Quantik opening-book consistency
+description: Generate a Rust depth book, consume it in Python, and compare opening-book-summary.v1 artifacts.
+inputs:
+  rust-command:
+    description: Shell command that generates an opening book and writes the Rust summary artifact.
+    required: true
+  python-command:
+    description: Shell command that consumes the opening book and writes the Python summary artifact.
+    required: true
+  rust-summary:
+    description: Path to the Rust opening-book-summary.v1 JSON artifact.
+    required: true
+  python-summary:
+    description: Path to the Python opening-book-summary.v1 JSON artifact.
+    required: true
+  expected-depth:
+    description: Expected generated opening-book depth.
+    required: false
+    default: "4"
+  expected-release:
+    description: Expected contracts SemVer release.
+    required: false
+    default: "1.1.0"
+runs:
+  using: composite
+  steps:
+    - name: Generate Rust opening book summary
+      shell: bash
+      run: ${{ inputs['rust-command'] }}
+    - name: Generate Python opening book summary
+      shell: bash
+      run: ${{ inputs['python-command'] }}
+    - name: Compare opening book summaries
+      shell: bash
+      run: |
+        test -s "${{ inputs['rust-summary'] }}"
+        test -s "${{ inputs['python-summary'] }}"
+        python "${{ github.action_path }}/../../scripts/validate_opening_book_summary.py" \
+          --rust-summary "${{ inputs['rust-summary'] }}" \
+          --python-summary "${{ inputs['python-summary'] }}" \
+          --expected-depth "${{ inputs['expected-depth'] }}" \
+          --expected-release "${{ inputs['expected-release'] }}"
