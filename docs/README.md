@@ -103,11 +103,15 @@ Known proposed contracts that are not registered yet:
   recommended Parquet physical schema for completed H2H games.
 - [`schemas/model-checkpoint-v1.json`](../schemas/model-checkpoint-v1.json):
   metadata manifest shape for model checkpoints.
+- [`fixtures/parquet/arrow-parquet-selfplay-v1-metadata.json`](../fixtures/parquet/arrow-parquet-selfplay-v1-metadata.json):
+  dependency-free metadata and column-order manifest for
+  `arrow-parquet-selfplay.v1` Parquet writers/readers.
 
 ## Validators And Workflows
 
 - [`scripts/validate_contracts.py`](../scripts/validate_contracts.py):
-  dependency-light manifest, schema JSON, and `selfplay.v1` fixture validator.
+  dependency-light manifest, schema JSON, Parquet metadata manifest, and
+  `selfplay.v1` fixture validator.
 - [`scripts/validate_opening_book_summary.py`](../scripts/validate_opening_book_summary.py):
   `opening-book-summary.v1` artifact validator/comparator.
 - [`scripts/validate_opening_book_artifact.py`](../scripts/validate_opening_book_artifact.py):

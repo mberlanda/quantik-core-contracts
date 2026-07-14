@@ -151,6 +151,27 @@ The Parquet file or table schema should identify the physical contract as
 `arrow-parquet-selfplay.v1`; row semantics should identify the logical contract
 as `selfplay.v1`.
 
+Recommended Parquet key/value metadata:
+
+```text
+physical_schema=arrow-parquet-selfplay.v1
+logical_schema=selfplay.v1
+logical_contract=selfplay.v1
+contracts_release=<contracts.json.release_version>
+contract_version=<contracts.json.release_version>
+```
+
+`physical_schema` identifies the Arrow/Parquet storage contract. Both
+`logical_schema` and `logical_contract` identify the row semantics as
+`selfplay.v1`; writers should keep the `logical_schema` column as well so row
+batches remain self-describing after projection or extraction. `contracts_release`
+and `contract_version` record the producing contract package release. Release
+artifacts should set both to the same SemVer value as `contracts.json`.
+
+The dependency-free fixture
+`fixtures/parquet/arrow-parquet-selfplay-v1-metadata.json` mirrors the required
+metadata and column order for CI checks that cannot import PyArrow.
+
 ## SQLite
 
 Use SQLite for:

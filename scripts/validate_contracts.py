@@ -30,6 +30,18 @@ ARROW_PARQUET_SELFPLAY_COLUMNS = [
     ("qfen", "utf8", False),
 ]
 
+ARROW_PARQUET_SELFPLAY_METADATA = {
+    "physical_schema": "arrow-parquet-selfplay.v1",
+    "logical_schema": "selfplay.v1",
+    "logical_contract": "selfplay.v1",
+}
+
+ARROW_PARQUET_SELFPLAY_RELEASE_METADATA_KEYS = [
+    "contracts_release",
+    "contract_version",
+]
+ARROW_PARQUET_SELFPLAY_SCHEMA_RELEASE_VALUE = "contracts.json.release_version"
+
 
 def fail(message: str) -> None:
     raise ValueError(message)
@@ -115,6 +127,18 @@ def validate_arrow_parquet_selfplay_metadata(
             f"{path}: arrow-parquet-selfplay.v1 logical_contract must be "
             "selfplay.v1"
         )
+    parquet_metadata = document.get("parquet_metadata")
+    if not isinstance(parquet_metadata, dict):
+        fail(f"{path}: arrow-parquet-selfplay.v1 parquet_metadata must be an object")
+    for key, expected_value in ARROW_PARQUET_SELFPLAY_METADATA.items():
+        if parquet_metadata.get(key) != expected_value:
+            fail(f"{path}: parquet_metadata.{key} must be {expected_value}")
+    for key in ARROW_PARQUET_SELFPLAY_RELEASE_METADATA_KEYS:
+        if parquet_metadata.get(key) != ARROW_PARQUET_SELFPLAY_SCHEMA_RELEASE_VALUE:
+            fail(
+                f"{path}: parquet_metadata.{key} must be "
+                f"{ARROW_PARQUET_SELFPLAY_SCHEMA_RELEASE_VALUE}"
+            )
 
     columns = document.get("columns")
     if not isinstance(columns, list):
@@ -152,7 +176,39 @@ def validate_arrow_parquet_selfplay_metadata(
         fail(f"{path}: value allowed values must be [-1, 1]")
 
 
-def validate_json_file(path: Path) -> None:
+def validate_arrow_parquet_selfplay_metadata_manifest(
+    document: dict[str, Any], path: Path, expected_contract_version: str | None
+) -> None:
+    for key, expected_value in ARROW_PARQUET_SELFPLAY_METADATA.items():
+        if document.get(key) != expected_value:
+            fail(f"{path}: {key} must be {expected_value}")
+
+    if expected_contract_version is not None:
+        for key in ARROW_PARQUET_SELFPLAY_RELEASE_METADATA_KEYS:
+            if document.get(key) != expected_contract_version:
+                fail(f"{path}: {key} must be {expected_contract_version}")
+
+    parquet_metadata = document.get("parquet_key_value_metadata")
+    if not isinstance(parquet_metadata, dict):
+        fail(f"{path}: parquet_key_value_metadata must be an object")
+    for key, expected_value in ARROW_PARQUET_SELFPLAY_METADATA.items():
+        if parquet_metadata.get(key) != expected_value:
+            fail(f"{path}: parquet_key_value_metadata.{key} must be {expected_value}")
+    if expected_contract_version is not None:
+        for key in ARROW_PARQUET_SELFPLAY_RELEASE_METADATA_KEYS:
+            if parquet_metadata.get(key) != expected_contract_version:
+                fail(
+                    f"{path}: parquet_key_value_metadata.{key} must be "
+                    f"{expected_contract_version}"
+                )
+
+    columns = document.get("columns")
+    expected_columns = [name for name, _type, _required in ARROW_PARQUET_SELFPLAY_COLUMNS]
+    if columns != expected_columns:
+        fail(f"{path}: columns must be {expected_columns}")
+
+
+def validate_json_file(path: Path, expected_contract_version: str | None) -> None:
     with path.open(encoding="utf-8") as handle:
         document = json.load(handle)
     if (
@@ -160,6 +216,13 @@ def validate_json_file(path: Path) -> None:
         and document.get("schema") == "arrow-parquet-selfplay.v1"
     ):
         validate_arrow_parquet_selfplay_metadata(document, path)
+    if (
+        isinstance(document, dict)
+        and document.get("schema") == "arrow-parquet-selfplay.v1.metadata"
+    ):
+        validate_arrow_parquet_selfplay_metadata_manifest(
+            document, path, expected_contract_version
+        )
 
 
 def validate_jsonl_file(
@@ -305,7 +368,7 @@ def main() -> int:
         fixture_paths = expand_globs(args.fixture_glob)
 
         for path in schema_paths:
-            validate_json_file(path)
+            validate_json_file(path, expected_contract_version)
             print(f"validated schema json: {path}")
 
         total_rows = 0
