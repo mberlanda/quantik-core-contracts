@@ -4,6 +4,10 @@ This page records the current implementation state of each registered contract.
 It is descriptive, not normative. Normative field rules live in the individual
 contract documents and schemas.
 
+Repository names and package names may differ. The Rust implementation lives in
+the `quantik-core-rust` repository, while the published crate/package reference
+is `quantik-core`.
+
 Status terms:
 
 - **Registered**: listed in `contracts.json`.
@@ -38,4 +42,3 @@ Status terms:
 - `opening-book.v1` should eventually have stricter graph-level validators for
   full SQLite artifacts, beyond aggregate summary consistency.
 - `search-summary.v1` is proposed but not registered.
-
