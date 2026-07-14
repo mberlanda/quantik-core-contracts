@@ -21,7 +21,7 @@ small manifests and fixtures.
 
 ```text
 schema: model-checkpoint.v1
-contract_version: 1.0.0
+contract_version: 1.1.0
 model_id: string
 model_family: string
 created_at: timestamp or ISO-8601 string
@@ -103,4 +103,3 @@ Readers may ignore:
 - optional architecture notes,
 - optional calibration-report details,
 - optional training notes.
-

@@ -1,0 +1,94 @@
+name: release-contracts
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to package, for example v1.1.0.
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Resolve release version
+        id: release
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+          fi
+          version="${tag#v}"
+          test -n "$tag"
+          test "$tag" != "$version"
+          test "$(cat VERSION)" = "$version"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Validate contract artifacts
+        run: |
+          python3 scripts/validate_contracts.py \
+            --manifest contracts.json \
+            --schema-glob 'schemas/**/*.json' \
+            --fixture-glob 'fixtures/**/*.jsonl' \
+            --expected-release "${{ steps.release.outputs.version }}"
+
+      - name: Build release bundle
+        run: |
+          set -euo pipefail
+          tag="${{ steps.release.outputs.tag }}"
+          version="${{ steps.release.outputs.version }}"
+          commit="$(git rev-parse HEAD)"
+          bundle="quantik-core-contracts-${tag}"
+          mkdir -p "dist/${bundle}"
+          cp README.md VERSION contracts.json "dist/${bundle}/"
+          cp -R docs schemas fixtures scripts actions .github "dist/${bundle}/"
+          cat > "dist/${bundle}/release-manifest.json" <<JSON
+          {
+            "name": "quantik-core-contracts",
+            "tag": "${tag}",
+            "version": "${version}",
+            "commit": "${commit}",
+            "contracts_manifest": "contracts.json",
+            "release_contract": "contracts.json#release_version"
+          }
+          JSON
+          tar -C dist -czf "dist/${bundle}.tar.gz" "${bundle}"
+          sha256sum "dist/${bundle}.tar.gz" > "dist/${bundle}.tar.gz.sha256"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quantik-core-contracts-${{ steps.release.outputs.tag }}
+          path: |
+            dist/quantik-core-contracts-${{ steps.release.outputs.tag }}.tar.gz
+            dist/quantik-core-contracts-${{ steps.release.outputs.tag }}.tar.gz.sha256
+
+      - name: Attach bundle to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="${{ steps.release.outputs.tag }}"
+          version="${{ steps.release.outputs.version }}"
+          archive="dist/quantik-core-contracts-${tag}.tar.gz"
+          checksum="${archive}.sha256"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$archive" "$checksum" --clobber
+          else
+            gh release create "$tag" "$archive" "$checksum" \
+              --verify-tag \
+              --title "Quantik contracts ${version}" \
+              --notes "Contract bundle for ${tag}."
+          fi

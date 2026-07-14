@@ -11,7 +11,7 @@ fixtures and debug samples.
 
 ```text
 schema: game-result.v1
-contract_version: 1.0.0
+contract_version: 1.1.0
 game_id: string
 started_at: timestamp or ISO-8601 string
 p0_engine_kind: string
@@ -98,4 +98,3 @@ Readers may ignore:
 - optional position key trace,
 - optional opening book id,
 - optional seed.
-

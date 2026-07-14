@@ -10,7 +10,7 @@ on:
       rust-crate:
         description: Published Rust crate name.
         required: false
-        default: quantik-core-rust
+        default: quantik-core
   schedule:
     - cron: "19 3 * * 1"
 
@@ -42,6 +42,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Install latest Rust crate binary
-        run: cargo install "${{ inputs['rust-crate'] || vars.RUST_CRATE || 'quantik-core-rust' }}"
+        run: cargo install "${{ inputs['rust-crate'] || vars.RUST_CRATE || 'quantik-core' }}"
       - name: Report installed crate
         run: cargo install --list

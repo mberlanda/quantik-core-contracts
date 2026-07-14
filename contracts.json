@@ -79,7 +79,7 @@
       "minimum_expected_contract_release": "1.1.0"
     },
     "rust": {
-      "crate": "quantik-core-rust",
+      "crate": "quantik-core",
       "recommended_constant": "SUPPORTED_CONTRACTS",
       "minimum_expected_contract_release": "1.1.0"
     }
