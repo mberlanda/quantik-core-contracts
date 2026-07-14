@@ -84,9 +84,14 @@ class ContractsValidatorTests(unittest.TestCase):
     def test_arrow_parquet_selfplay_rejects_missing_required_column(self) -> None:
         document = self._load_arrow_parquet_schema()
         document["columns"] = [
-            col for col in document["columns"] if col["name"] != "policy_visits"
+            column for column in document["columns"] if column["name"] != "policy_visits"
         ]
         self._run_validator_with_schema(document, "must define 9 columns")
+
+    def test_arrow_parquet_selfplay_requires_policy_visits_column(self) -> None:
+        document = self._load_arrow_parquet_schema()
+        document["columns"][6]["name"] = "policy"
+        self._run_validator_with_schema(document, "column 6 name must be policy_visits")
 
 
 if __name__ == "__main__":
