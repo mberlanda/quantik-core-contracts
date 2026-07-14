@@ -40,6 +40,30 @@
       "major": 1,
       "schema": "schemas/arrow-parquet-selfplay-v1.json",
       "docs": "docs/storage-representations.md"
+    },
+    "opening_book": {
+      "id": "opening-book.v1",
+      "major": 1,
+      "schema": "schemas/opening-book-v1.json",
+      "docs": "docs/opening-book-v1.md"
+    },
+    "observation": {
+      "id": "observation.v1",
+      "major": 1,
+      "schema": "schemas/observation-v1.json",
+      "docs": "docs/observation-v1.md"
+    },
+    "game_result": {
+      "id": "game-result.v1",
+      "major": 1,
+      "schema": "schemas/game-result-v1.json",
+      "docs": "docs/game-result-v1.md"
+    },
+    "model_checkpoint": {
+      "id": "model-checkpoint.v1",
+      "major": 1,
+      "schema": "schemas/model-checkpoint-v1.json",
+      "docs": "docs/model-checkpoint-v1.md"
     }
   },
   "implementation_expectations": {

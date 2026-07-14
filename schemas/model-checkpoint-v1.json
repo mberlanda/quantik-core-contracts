@@ -1,0 +1,29 @@
+{
+  "schema": "model-checkpoint.v1",
+  "description": "Metadata manifest for Quantik policy/value model checkpoints.",
+  "storage": "json",
+  "required_fields": [
+    "schema",
+    "contract_version",
+    "model_id",
+    "model_family",
+    "created_at",
+    "input_contracts",
+    "output_contract",
+    "weights_format",
+    "weights_hash",
+    "size_bytes",
+    "training_data_manifest",
+    "calibration_report"
+  ],
+  "recommended_outputs": {
+    "policy_logits": "fixed_size_list<float32,64>",
+    "value": "float32",
+    "confidence": "optional float32"
+  },
+  "notes": [
+    "model-checkpoint.v1 stores metadata, not large weights.",
+    "Runtimes must apply legal action masks outside the model.",
+    "Quantized models must declare quantization details."
+  ]
+}

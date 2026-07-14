@@ -1,0 +1,43 @@
+{
+  "schema": "opening-book.v1",
+  "description": "Recommended SQLite source-of-truth shape for Quantik opening-book graph artifacts.",
+  "storage": "sqlite",
+  "tables": {
+    "book_metadata": ["key", "value"],
+    "positions": [
+      "canonical_key",
+      "node_id",
+      "bitboards",
+      "side_to_move",
+      "depth_ply",
+      "terminal_status",
+      "solved_status",
+      "game_value",
+      "value_confidence",
+      "qfen_debug",
+      "source"
+    ],
+    "edges": [
+      "parent_node_id",
+      "action_index",
+      "child_node_id",
+      "edge_flags",
+      "transform_id"
+    ],
+    "book_policy": [
+      "node_id",
+      "action_index",
+      "rank",
+      "prior",
+      "visits",
+      "q_value",
+      "source",
+      "source_confidence"
+    ]
+  },
+  "notes": [
+    "opening-book.v1 is a canonical graph contract.",
+    "Raw search observations belong in observation.v1.",
+    "QFEN is debug/interchange text, not the required hot lookup key."
+  ]
+}
