@@ -37,20 +37,6 @@ jobs:
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
           echo "Resolved release tag: $tag"
 
-      - name: Checkout Python library at shared tag
-        uses: actions/checkout@v4
-        with:
-          repository: mberlanda/quantik-core-py
-          ref: ${{ steps.release-tag.outputs.tag }}
-          path: quantik-core-py
-
-      - name: Checkout Rust library at shared tag
-        uses: actions/checkout@v4
-        with:
-          repository: mberlanda/quantik-core-rust
-          ref: ${{ steps.release-tag.outputs.tag }}
-          path: quantik-core-rust
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -59,30 +45,31 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install Python library from checked-out tag
-        working-directory: quantik-core-py
-        run: python -m pip install -e .
+      - name: Install published Python library
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "quantik-core==${{ steps.release-tag.outputs.version }}"
+
+      - name: Install published Rust binaries
+        run: cargo install quantik-core --version "${{ steps.release-tag.outputs.version }}"
 
       - name: Generate depth-4 opening book and summaries
         shell: bash
         run: |
           mkdir -p artifacts
-          cd quantik-core-rust
-          scripts/generate_opening_book.sh search \
-            --depth 4 \
-            --db ../artifacts/depth4.sqlite \
-            --profile debug \
-            --quiet
-          scripts/inspect_opening_book.sh summary-json \
-            --db ../artifacts/depth4.sqlite \
-            --depth 4 \
-            --output ../artifacts/rust-summary.json \
-            --profile debug
-          cd ../quantik-core-py
+          bench_bfs \
+            --db artifacts/depth4.sqlite \
+            --quiet \
+            4
+          bench_bfs_inspect \
+            --db artifacts/depth4.sqlite \
+            summary-json \
+            --expected-depth 4 \
+            --output artifacts/rust-summary.json
           python -m quantik_core.opening_book_summary \
-            --db ../artifacts/depth4.sqlite \
+            --db artifacts/depth4.sqlite \
             --depth 4 \
-            --output ../artifacts/python-summary.json
+            --output artifacts/python-summary.json
 
       - name: Validate opening-book SQLite artifact and summaries
         working-directory: quantik-core-contracts
