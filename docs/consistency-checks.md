@@ -109,7 +109,7 @@ The scheduled workflow is present but gated by repository variables:
 ```text
 ENABLE_RELEASE_SMOKE=true
 PYTHON_PACKAGE=quantik-core
-RUST_CRATE=quantik-core-rust
+RUST_CRATE=quantik-core
 ```
 
 When enabled, it installs the latest published Python package and Rust crate,
