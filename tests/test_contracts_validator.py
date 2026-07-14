@@ -35,11 +35,9 @@ class ContractsValidatorTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_arrow_parquet_selfplay_requires_logical_contract(self) -> None:
-        schema_path = ROOT / "schemas" / "arrow-parquet-selfplay-v1.json"
-        document = json.loads(schema_path.read_text(encoding="utf-8"))
-        document.pop("logical_contract")
-
+    def _run_validator_with_schema(
+        self, document: dict, expected_error: str
+    ) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             bad_schema = Path(temp_dir) / "arrow-parquet-selfplay-v1.json"
             bad_schema.write_text(json.dumps(document), encoding="utf-8")
@@ -62,7 +60,26 @@ class ContractsValidatorTests(unittest.TestCase):
             )
 
             self.assertEqual(result.returncode, 1)
-            self.assertIn("logical_contract must be selfplay.v1", result.stderr)
+            self.assertIn(expected_error, result.stderr)
+
+    def _load_arrow_parquet_schema(self) -> dict:
+        schema_path = ROOT / "schemas" / "arrow-parquet-selfplay-v1.json"
+        return json.loads(schema_path.read_text(encoding="utf-8"))
+
+    def test_arrow_parquet_selfplay_requires_logical_contract(self) -> None:
+        document = self._load_arrow_parquet_schema()
+        document.pop("logical_contract")
+        self._run_validator_with_schema(document, "logical_contract must be selfplay.v1")
+
+    def test_arrow_parquet_selfplay_requires_storage_parquet(self) -> None:
+        document = self._load_arrow_parquet_schema()
+        document.pop("storage")
+        self._run_validator_with_schema(document, "storage must be parquet")
+
+    def test_arrow_parquet_selfplay_rejects_extra_column(self) -> None:
+        document = self._load_arrow_parquet_schema()
+        document["columns"].append({"name": "extra", "type": "utf8", "required": False})
+        self._run_validator_with_schema(document, "must define 9 columns")
 
 
 if __name__ == "__main__":

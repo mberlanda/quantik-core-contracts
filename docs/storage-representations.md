@@ -138,8 +138,8 @@ contract_version: utf8
 game_id: uint64
 ply: uint16
 side_to_move: uint8
-bitboards: fixed_size_list<uint16, 8>
-policy_visits: fixed_size_list<uint32, 64>
+bitboards: fixed_size_list<uint16,8>
+policy_visits: fixed_size_list<uint32,64>
 value: int8
 qfen: optional utf8
 ```
