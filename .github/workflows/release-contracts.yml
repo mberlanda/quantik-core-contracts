@@ -41,6 +41,7 @@ jobs:
           python3 scripts/validate_contracts.py \
             --manifest contracts.json \
             --schema-glob 'schemas/**/*.json' \
+            --schema-glob 'fixtures/parquet/*.json' \
             --fixture-glob 'fixtures/**/*.jsonl' \
             --expected-release "${{ steps.release.outputs.version }}"
 

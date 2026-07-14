@@ -1,0 +1,32 @@
+{
+  "schema": "game-result.v1.metadata",
+  "description": "Dependency-free manifest for expected Parquet key/value metadata on game-result.v1 datasets.",
+  "physical_schema": "game-result.v1",
+  "logical_schema": "game-result.v1",
+  "logical_contract": "game-result.v1",
+  "contracts_release": "1.1.0",
+  "contract_version": "1.1.0",
+  "parquet_key_value_metadata": {
+    "physical_schema": "game-result.v1",
+    "logical_schema": "game-result.v1",
+    "logical_contract": "game-result.v1",
+    "contracts_release": "1.1.0",
+    "contract_version": "1.1.0"
+  },
+  "columns": [
+    "schema",
+    "contract_version",
+    "game_id",
+    "started_at",
+    "p0_engine_kind",
+    "p0_engine_version",
+    "p1_engine_kind",
+    "p1_engine_version",
+    "initial_position_key",
+    "winner",
+    "plies",
+    "terminal_reason",
+    "move_action_indices",
+    "run_id"
+  ]
+}

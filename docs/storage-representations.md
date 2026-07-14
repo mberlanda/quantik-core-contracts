@@ -172,6 +172,28 @@ The dependency-free fixture
 `fixtures/parquet/arrow-parquet-selfplay-v1-metadata.json` mirrors the required
 metadata and column order for CI checks that cannot import PyArrow.
 
+`observation.v1` and `game-result.v1` are also implemented as Parquet physical
+schemas. Unlike `arrow-parquet-selfplay.v1`, their physical schema IDs and
+logical contract IDs are the same:
+
+```text
+physical_schema=observation.v1
+logical_schema=observation.v1
+logical_contract=observation.v1
+```
+
+```text
+physical_schema=game-result.v1
+logical_schema=game-result.v1
+logical_contract=game-result.v1
+```
+
+Both also require `contracts_release` and `contract_version` metadata matching
+`contracts.json.release_version`. The dependency-free fixtures
+`fixtures/parquet/observation-v1-metadata.json` and
+`fixtures/parquet/game-result-v1-metadata.json` mirror their required metadata
+and column order.
+
 ## SQLite
 
 Use SQLite for:

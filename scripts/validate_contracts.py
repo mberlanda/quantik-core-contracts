@@ -42,6 +42,51 @@ ARROW_PARQUET_SELFPLAY_RELEASE_METADATA_KEYS = [
 ]
 ARROW_PARQUET_SELFPLAY_SCHEMA_RELEASE_VALUE = "contracts.json.release_version"
 
+OBSERVATION_PARQUET_COLUMNS = [
+    ("schema", "utf8", True),
+    ("contract_version", "utf8", True),
+    ("run_id", "utf8", True),
+    ("row_id", "uint64", True),
+    ("position_key", "utf8", True),
+    ("ply", "uint16", True),
+    ("side_to_move", "uint8", True),
+    ("bitboards", "fixed_size_list<uint16,8>", True),
+    ("qfen", "utf8", False),
+    ("legal_action_mask", "uint64", True),
+    ("engine_kind", "utf8", True),
+    ("engine_version", "utf8", True),
+    ("elapsed_ms", "uint32", True),
+    ("policy_visits", "fixed_size_list<uint32,64>", True),
+    ("value", "float64", True),
+    ("value_source", "utf8", True),
+    ("source_confidence", "float64", True),
+]
+
+GAME_RESULT_PARQUET_COLUMNS = [
+    ("schema", "utf8", True),
+    ("contract_version", "utf8", True),
+    ("game_id", "utf8", True),
+    ("started_at", "utf8", True),
+    ("p0_engine_kind", "utf8", True),
+    ("p0_engine_version", "utf8", True),
+    ("p1_engine_kind", "utf8", True),
+    ("p1_engine_version", "utf8", True),
+    ("initial_position_key", "utf8", True),
+    ("winner", "uint8", True),
+    ("plies", "uint16", True),
+    ("terminal_reason", "utf8", True),
+    ("move_action_indices", "list<uint8>", True),
+    ("run_id", "utf8", False),
+]
+
+IMPLEMENTED_PARQUET_CONTRACTS = {
+    "observation.v1": OBSERVATION_PARQUET_COLUMNS,
+    "game-result.v1": GAME_RESULT_PARQUET_COLUMNS,
+}
+
+PARQUET_RELEASE_METADATA_KEYS = ["contracts_release", "contract_version"]
+PARQUET_SCHEMA_RELEASE_VALUE = "contracts.json.release_version"
+
 
 def fail(message: str) -> None:
     raise ValueError(message)
@@ -208,6 +253,97 @@ def validate_arrow_parquet_selfplay_metadata_manifest(
         fail(f"{path}: columns must be {expected_columns}")
 
 
+def validate_implemented_parquet_schema(
+    document: dict[str, Any], path: Path, contract_id: str
+) -> None:
+    if document.get("storage") != "parquet":
+        fail(f"{path}: {contract_id} storage must be parquet")
+
+    parquet_metadata = document.get("parquet_metadata")
+    if not isinstance(parquet_metadata, dict):
+        fail(f"{path}: {contract_id} parquet_metadata must be an object")
+    for key in ("physical_schema", "logical_schema", "logical_contract"):
+        if parquet_metadata.get(key) != contract_id:
+            fail(f"{path}: parquet_metadata.{key} must be {contract_id}")
+    for key in PARQUET_RELEASE_METADATA_KEYS:
+        if parquet_metadata.get(key) != PARQUET_SCHEMA_RELEASE_VALUE:
+            fail(
+                f"{path}: parquet_metadata.{key} must be "
+                f"{PARQUET_SCHEMA_RELEASE_VALUE}"
+            )
+
+    expected_columns = IMPLEMENTED_PARQUET_CONTRACTS[contract_id]
+    columns = document.get("columns")
+    if not isinstance(columns, list):
+        fail(f"{path}: {contract_id} columns must be a list")
+    if len(columns) != len(expected_columns):
+        fail(
+            f"{path}: {contract_id} must define {len(expected_columns)} columns"
+        )
+
+    for index, (column, expected) in enumerate(
+        zip(columns, expected_columns, strict=True)
+    ):
+        expected_name, expected_type, expected_required = expected
+        if not isinstance(column, dict):
+            fail(f"{path}: column {index} must be an object")
+        if column.get("name") != expected_name:
+            fail(f"{path}: column {index} name must be {expected_name}")
+        if column.get("type") != expected_type:
+            fail(f"{path}: column {expected_name} type must be {expected_type}")
+        if column.get("required") is not expected_required:
+            fail(
+                f"{path}: column {expected_name} required must be "
+                f"{expected_required}"
+            )
+
+    if contract_id == "observation.v1":
+        side_to_move = columns[6]
+        if side_to_move.get("allowed") not in (None, [0, 1]):
+            fail(f"{path}: side_to_move allowed values must be [0, 1] when present")
+    if contract_id == "game-result.v1":
+        winner = columns[9]
+        if winner.get("allowed") != [0, 1]:
+            fail(f"{path}: winner allowed values must be [0, 1]")
+
+
+def validate_implemented_parquet_metadata_manifest(
+    document: dict[str, Any],
+    path: Path,
+    contract_id: str,
+    expected_contract_version: str | None,
+) -> None:
+    for key in ("physical_schema", "logical_schema", "logical_contract"):
+        if document.get(key) != contract_id:
+            fail(f"{path}: {key} must be {contract_id}")
+
+    if expected_contract_version is not None:
+        for key in PARQUET_RELEASE_METADATA_KEYS:
+            if document.get(key) != expected_contract_version:
+                fail(f"{path}: {key} must be {expected_contract_version}")
+
+    parquet_metadata = document.get("parquet_key_value_metadata")
+    if not isinstance(parquet_metadata, dict):
+        fail(f"{path}: parquet_key_value_metadata must be an object")
+    for key in ("physical_schema", "logical_schema", "logical_contract"):
+        if parquet_metadata.get(key) != contract_id:
+            fail(f"{path}: parquet_key_value_metadata.{key} must be {contract_id}")
+    if expected_contract_version is not None:
+        for key in PARQUET_RELEASE_METADATA_KEYS:
+            if parquet_metadata.get(key) != expected_contract_version:
+                fail(
+                    f"{path}: parquet_key_value_metadata.{key} must be "
+                    f"{expected_contract_version}"
+                )
+
+    columns = document.get("columns")
+    expected_columns = [
+        name for name, _type, _required in IMPLEMENTED_PARQUET_CONTRACTS[contract_id]
+    ]
+    if columns != expected_columns:
+        fail(f"{path}: columns must be {expected_columns}")
+
+
 def validate_json_file(path: Path, expected_contract_version: str | None) -> None:
     with path.open(encoding="utf-8") as handle:
         document = json.load(handle)
@@ -223,6 +359,16 @@ def validate_json_file(path: Path, expected_contract_version: str | None) -> Non
         validate_arrow_parquet_selfplay_metadata_manifest(
             document, path, expected_contract_version
         )
+    if isinstance(document, dict) and document.get("schema") in IMPLEMENTED_PARQUET_CONTRACTS:
+        validate_implemented_parquet_schema(document, path, document["schema"])
+    if isinstance(document, dict):
+        schema = document.get("schema")
+        if isinstance(schema, str) and schema.endswith(".metadata"):
+            contract_id = schema.removesuffix(".metadata")
+            if contract_id in IMPLEMENTED_PARQUET_CONTRACTS:
+                validate_implemented_parquet_metadata_manifest(
+                    document, path, contract_id, expected_contract_version
+                )
 
 
 def validate_jsonl_file(

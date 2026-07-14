@@ -1,0 +1,35 @@
+{
+  "schema": "observation.v1.metadata",
+  "description": "Dependency-free manifest for expected Parquet key/value metadata on observation.v1 datasets.",
+  "physical_schema": "observation.v1",
+  "logical_schema": "observation.v1",
+  "logical_contract": "observation.v1",
+  "contracts_release": "1.1.0",
+  "contract_version": "1.1.0",
+  "parquet_key_value_metadata": {
+    "physical_schema": "observation.v1",
+    "logical_schema": "observation.v1",
+    "logical_contract": "observation.v1",
+    "contracts_release": "1.1.0",
+    "contract_version": "1.1.0"
+  },
+  "columns": [
+    "schema",
+    "contract_version",
+    "run_id",
+    "row_id",
+    "position_key",
+    "ply",
+    "side_to_move",
+    "bitboards",
+    "qfen",
+    "legal_action_mask",
+    "engine_kind",
+    "engine_version",
+    "elapsed_ms",
+    "policy_visits",
+    "value",
+    "value_source",
+    "source_confidence"
+  ]
+}

@@ -106,6 +106,12 @@ Known proposed contracts that are not registered yet:
 - [`fixtures/parquet/arrow-parquet-selfplay-v1-metadata.json`](../fixtures/parquet/arrow-parquet-selfplay-v1-metadata.json):
   dependency-free metadata and column-order manifest for
   `arrow-parquet-selfplay.v1` Parquet writers/readers.
+- [`fixtures/parquet/observation-v1-metadata.json`](../fixtures/parquet/observation-v1-metadata.json):
+  dependency-free metadata and column-order manifest for `observation.v1`
+  Parquet writers/readers.
+- [`fixtures/parquet/game-result-v1-metadata.json`](../fixtures/parquet/game-result-v1-metadata.json):
+  dependency-free metadata and column-order manifest for `game-result.v1`
+  Parquet writers/readers.
 
 ## Validators And Workflows
 
