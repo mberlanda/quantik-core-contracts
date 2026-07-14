@@ -25,7 +25,7 @@ Status terms:
 | `action-index.v1` | Shared `shape * 16 + position` helpers and tests | Shared `shape * 16 + position` helpers and tests | Implemented as a convention used by self-play, observations, and games. |
 | `selfplay.v1` | JSONL reader validates schema, optional release, QFEN, side-to-move, legal policy, duplicate actions, and value | Contract parser validates release, QFEN, side-to-move, legal policy, duplicate actions, and value; self-play exporter emits the contract metadata | Logical JSONL fixture/debug parity is implemented across Python and Rust. Bulk training storage should use `arrow-parquet-selfplay.v1` physical columns. |
 | `tensor-board.v1` | Tensor materialization from QFEN | Core game state can derive tensors through consumers | Storage guidance / derived representation; no standalone artifact validator. |
-| `arrow-parquet-selfplay.v1` | Dense physical record converter materializes `logical_schema`, release, bitboards, `policy_visits[64]`, integer value, and optional QFEN | Dense physical record converter materializes `logical_schema`, release, bitboards, `policy_visits[64]`, integer value, and optional QFEN | Cross-stack physical row-shape parity is implemented before taking a Parquet dependency. Real Parquet reader/writer roundtrip evidence is still missing from this contracts package. |
+| `arrow-parquet-selfplay.v1` | Optional PyArrow reader/writer roundtrips real Parquet bytes, validates metadata, physical schema, bitboards, dense `policy_visits[64]`, integer value, and optional QFEN | Optional Arrow/Parquet feature reader/writer roundtrips real Parquet bytes, validates metadata, physical schema, bitboards, dense `policy_visits[64]`, integer value, and optional QFEN | Real Parquet I/O is implemented in both stacks. Metadata expectations are documented and covered by a dependency-free fixture; cross-stack file interchange fixtures are still pending. |
 | `opening-book.v1` | SQLite/opening-book tooling and summary consumption path | SQLite opening-book producer/inspector | Implemented as a graph artifact path, with summary checks covering cross-stack drift; general graph validators are still lightweight. |
 | `opening-book-summary.v1` | Producer emits summary JSON with release `1.1.0` | Producer emits summary JSON with release `1.1.0` | Cross-stack summary artifact is implemented and validated by contracts scripts. |
 | `observation.v1` | JSONL reader validates release `1.1.0`, bitboards, legal mask, policy visits, and scalar fields | Benchmark exporter emits release `1.1.0`; consumer parser validates release, bitboards, legal mask, policy visits, and scalar fields | Rust/Python JSON consumer parity is implemented for debug/fixture rows; Parquet remains the normative large-storage target. |
@@ -34,9 +34,13 @@ Status terms:
 
 ## Known Gaps
 
-- `arrow-parquet-selfplay.v1` needs real Parquet reader/writer roundtrip tests,
-  including metadata checks that the physical schema is
-  `arrow-parquet-selfplay.v1` and row semantics are `selfplay.v1`.
+- `arrow-parquet-selfplay.v1` has real Parquet reader/writer roundtrip tests in
+  both stacks, including key/value metadata checks that the physical schema is
+  `arrow-parquet-selfplay.v1`, row semantics are `selfplay.v1`, and the stored
+  contract release matches `contracts.json.release_version`.
+- `arrow-parquet-selfplay.v1` still needs checked-in cross-stack interchange
+  evidence: a Rust-produced Parquet fixture loaded by Python and a
+  Python-produced Parquet fixture loaded by Rust.
 - `observation.v1` and `game-result.v1` need Parquet readers/writers once the
   large artifact path is active; current parity is JSON/JSONL parser coverage.
 - `selfplay.v1` still needs a generated Rust JSONL smoke artifact checked into

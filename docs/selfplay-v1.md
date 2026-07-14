@@ -87,6 +87,20 @@ same side-to-move perspective. The top-level physical schema remains
 `arrow-parquet-selfplay.v1`; the row-level logical schema remains
 `selfplay.v1`.
 
+Parquet writers should also store file/table key-value metadata:
+
+```text
+physical_schema: arrow-parquet-selfplay.v1
+logical_schema: selfplay.v1
+logical_contract: selfplay.v1
+contracts_release: contracts.json.release_version
+contract_version: contracts.json.release_version
+```
+
+These metadata fields identify the stored bytes and release provenance. They do
+not change `selfplay.v1`: the logical contract remains the JSONL row semantics,
+while `arrow-parquet-selfplay.v1` is the physical bulk-storage representation.
+
 Dense visits avoid ragged nested arrays during training and make the action
 index contract explicit. JSONL fixtures should continue to use sparse policy
 lists for readability and contract review.

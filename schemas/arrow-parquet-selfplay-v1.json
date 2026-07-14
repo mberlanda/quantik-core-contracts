@@ -3,6 +3,13 @@
   "description": "Recommended Arrow/Parquet physical schema for bulk rows carrying selfplay.v1 semantics.",
   "storage": "parquet",
   "logical_contract": "selfplay.v1",
+  "parquet_metadata": {
+    "physical_schema": "arrow-parquet-selfplay.v1",
+    "logical_schema": "selfplay.v1",
+    "logical_contract": "selfplay.v1",
+    "contracts_release": "contracts.json.release_version",
+    "contract_version": "contracts.json.release_version"
+  },
   "columns": [
     { "name": "logical_schema", "type": "utf8", "required": true, "allowed": ["selfplay.v1"] },
     { "name": "contract_version", "type": "utf8", "required": true },
@@ -16,6 +23,9 @@
   ],
   "notes": [
     "Top-level schema identifies the physical Arrow/Parquet contract; logical_schema identifies the row semantics as selfplay.v1.",
+    "Parquet key/value metadata should include physical_schema, logical_schema, logical_contract, contracts_release, and contract_version.",
+    "physical_schema must be arrow-parquet-selfplay.v1; logical_schema and logical_contract must be selfplay.v1.",
+    "contracts_release and contract_version should match contracts.json.release_version for release artifacts.",
     "contract_version must match contracts.json.release_version for the producing package.",
     "bitboards are the physical board encoding derived from the selfplay.v1 qfen field.",
     "policy_visits uses action_index = shape * 16 + position.",

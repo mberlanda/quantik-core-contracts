@@ -1,0 +1,27 @@
+{
+  "schema": "arrow-parquet-selfplay.v1.metadata",
+  "description": "Dependency-free manifest for expected Parquet key/value metadata on arrow-parquet-selfplay.v1 datasets.",
+  "physical_schema": "arrow-parquet-selfplay.v1",
+  "logical_schema": "selfplay.v1",
+  "logical_contract": "selfplay.v1",
+  "contracts_release": "1.1.0",
+  "contract_version": "1.1.0",
+  "parquet_key_value_metadata": {
+    "physical_schema": "arrow-parquet-selfplay.v1",
+    "logical_schema": "selfplay.v1",
+    "logical_contract": "selfplay.v1",
+    "contracts_release": "1.1.0",
+    "contract_version": "1.1.0"
+  },
+  "columns": [
+    "logical_schema",
+    "contract_version",
+    "game_id",
+    "ply",
+    "side_to_move",
+    "bitboards",
+    "policy_visits",
+    "value",
+    "qfen"
+  ]
+}
