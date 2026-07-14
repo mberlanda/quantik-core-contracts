@@ -10,5 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./actions/validate-contracts
-
+      - name: Validate contract artifacts
+        run: |
+          python3 scripts/validate_contracts.py \
+            --manifest contracts.json \
+            --schema-glob 'schemas/**/*.json' \
+            --fixture-glob 'fixtures/**/*.jsonl' \
+            --expected-release 1.1.0

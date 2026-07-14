@@ -1,17 +1,18 @@
-# Opening Knowledge Data Preparation Next Steps
+# Opening Knowledge Data Preparation Status
 
 Date: 2026-07-13
 
-Status: implementation preparation note
+Last refreshed: 2026-07-14
+
+Status: compacted implementation-status note
 
 ## Purpose
 
-This note translates the research direction into concrete next steps for the
-contracts repository and the Quantik generators. It focuses on artifact
-boundaries: what should be SQLite, what should be Parquet, what should remain
-JSONL, and what should later become a compact engine probe or model checkpoint.
+This note records the artifact boundaries for opening knowledge and tracks what
+has moved from plan into registered contracts. Older step-by-step planning has
+been compacted so this file reflects the repository as implemented.
 
-The key decision is:
+The durable decision remains:
 
 ```text
 SQLite stores graph truth.
@@ -20,188 +21,131 @@ Compact probe artifacts serve engines.
 Model checkpoints compress expertise.
 ```
 
-## Artifact Map
+JSONL remains fixture/debug oriented. Large generated observation and game data
+belongs in Parquet. SQLite should not become a dumping ground for every search
+visit.
 
-| Artifact | Contract candidate | Storage | Owner |
-| --- | --- | --- | --- |
-| Golden self-play fixture | `selfplay.v1` | JSONL | contracts |
-| Bulk self-play rows | `arrow-parquet-selfplay.v1` | Parquet | generators/training |
-| Opening graph | `opening-book.v1` | SQLite | Rust generator |
-| Engine observations | `observation.v1` | Parquet | Rust generator |
-| H2H games | `game-result.v1` | Parquet | Rust generator |
-| Search trace summaries | `search-summary.v1` | Parquet | Rust generator |
-| Named theory | `opening-annotation.v1` | SQLite or JSON | contracts/frontend |
-| Engine probe | `opening-probe.v1` | compact binary or KV | Rust engine |
-| Model checkpoint | `model-checkpoint.v1` | safetensors/ONNX plus manifest | training |
+## Artifact Status
 
-JSONL should stay small and fixture-oriented. It is not the right format for
-millions of observations. SQLite should not become a dumping ground for every
-search visit. Parquet should own the analytical record.
+| Artifact | Contract | Storage | Status | Owner |
+| --- | --- | --- | --- | --- |
+| Golden self-play fixture | `selfplay.v1` | JSONL | registered | contracts |
+| Bulk self-play rows | `arrow-parquet-selfplay.v1` | Parquet | registered metadata | generators/training |
+| Opening graph | `opening-book.v1` | SQLite | registered | Rust generator |
+| Opening graph summary | `opening-book-summary.v1` | JSON | registered | Rust/Python consistency checks |
+| Engine observations | `observation.v1` | Parquet | registered | Rust generator |
+| H2H games | `game-result.v1` | Parquet | registered | Rust generator |
+| Model checkpoint manifest | `model-checkpoint.v1` | JSON manifest plus weights artifact | registered metadata | training/runtime |
+| Root search summary | `search-summary.v1` | Parquet or JSONL fixture | proposed | Rust generator |
+| Named theory | `opening-annotation.v1` | SQLite or JSON | proposed | contracts/frontend |
+| Engine probe | `opening-probe.v1` | compact binary or KV | proposed | Rust engine |
 
-## Step 1: Add Contract Vocabulary
+## Implemented Contract Docs
 
-Add human-readable contract docs before schemas:
+The following docs and schema metadata are now the source of truth:
 
 - `docs/opening-book-v1.md`
+- `schemas/opening-book-v1.json`
+- `docs/opening-book-summary-v1.md`
+- `schemas/opening-book-summary-v1.json`
 - `docs/observation-v1.md`
+- `schemas/observation-v1.json`
+- `docs/game-result-v1.md`
+- `schemas/game-result-v1.json`
 - `docs/model-checkpoint-v1.md`
+- `schemas/model-checkpoint-v1.json`
 
-The first pass can be normative prose plus examples. Machine-readable schemas
-can follow once the Rust exporter has produced fixtures.
+`contracts.json` registers these contracts in release `1.1.0`.
 
-Required terms:
+## Storage Boundaries
 
-- `canonical_key`
-- `node_id`
-- `edge_id`
-- `action_index`
-- `legal_action_mask`
-- `engine_id`
-- `engine_checkpoint`
-- `generation_budget`
-- `search_budget`
-- `source_confidence`
-- `solved_status`
-- `line_id`
+### Opening Graph
 
-## Step 2: Keep SQLite Focused On Opening Graph Truth
+`opening-book.v1` owns stable, resumable graph truth:
 
-SQLite should contain stable, resumable graph state:
+- canonical positions,
+- legal action-preserving edges,
+- aggregated value/policy knowledge,
+- solved or bounded status,
+- generation provenance,
+- optional annotation hooks.
 
-```text
-positions(
-  canonical_key,
-  node_id,
-  qfen_debug,
-  bitboards,
-  side_to_move,
-  depth_ply,
-  terminal_status,
-  solved_status,
-  game_value,
-  value_confidence,
-  symmetry_orbit_size,
-  source
-)
+The SQLite source shape is defined in `docs/opening-book-v1.md` and
+`schemas/opening-book-v1.json`.
 
-edges(
-  parent_node_id,
-  action_index,
-  child_node_id,
-  transform_id,
-  edge_flags
-)
+### Opening Summary
 
-book_policy(
-  node_id,
-  action_index,
-  rank,
-  prior,
-  visits,
-  q_value,
-  source,
-  source_confidence
-)
-```
+`opening-book-summary.v1` is a small consistency artifact for CI and release
+checks. It is not the graph and does not replace the SQLite book. It records
+depth, total positions, terminals, total edges, and per-depth aggregates.
 
-The opening graph can aggregate observations, but it should not store every raw
-observation event. This keeps the graph inspectable and avoids turning SQLite
-into a training lake.
+### Observations
 
-## Step 3: Store Observations As Parquet
+`observation.v1` owns per-root training and analytics rows:
 
-Observation rows should be columnar because the common operations are scans,
-filters, aggregations, and ML batch reads.
+- bitboards,
+- side to move,
+- legal action mask,
+- engine identity and budget,
+- elapsed time,
+- dense `policy_visits[64]`,
+- optional `root_q_values[64]`,
+- optional `principal_variation`,
+- value and source confidence.
 
-Recommended `observation.v1` columns:
+This is the right contract for model training rows and engine disagreement
+mining. It is not opening-book graph truth.
 
-```text
-run_id: utf8
-row_id: uint64
-schema: utf8
-contract_version: utf8
-position_key: fixed_size_binary[16] or utf8
-ply: uint16
-side_to_move: uint8
-bitboards: fixed_size_list<uint16, 8>
-qfen: optional utf8
-legal_action_mask: uint64
-engine_kind: dictionary utf8  # mcts, beam, minimax, hybrid
-engine_checkpoint: optional utf8
-engine_version: utf8
-search_depth: optional uint16
-rollouts: optional uint32
-beam_width: optional uint16
-node_budget: optional uint64
-time_budget_ms: optional uint32
-elapsed_ms: uint32
-seed: optional uint64
-policy_visits: fixed_size_list<uint32, 64>
-policy_priors: optional fixed_size_list<float32, 64>
-root_q_values: optional fixed_size_list<float32, 64>
-value: float32
-value_source: dictionary utf8  # exact, rollout, minimax, backup, game
-source_confidence: float32
-principal_variation: optional list<uint8>
-```
+### H2H Games
 
-Partition layout:
+`game-result.v1` owns completed head-to-head games and tournament evidence:
+
+- engine identities,
+- initial position,
+- winner,
+- terminal reason,
+- action-index move list,
+- optional position trace and budget metadata.
+
+This feeds Elo proxy estimation, opening-line outcome statistics, and engine
+regression checks.
+
+### Model Checkpoints
+
+`model-checkpoint.v1` owns small manifests for neural or statistical model
+artifacts. Weights remain outside the contracts repository. The manifest records
+input/output contracts, format, hashes, size, training-data provenance, and
+calibration references.
+
+## Proposed Remaining Contract: `search-summary.v1`
+
+Full search traces can become enormous, so do not standardize full per-edge or
+per-simulation traces in v1. The proposed first artifact should be one
+root-search diagnostic row per completed search.
+
+Recommended row shape:
 
 ```text
-data/observations/
-  contract_version=1.0.0/
-  engine_kind=mcts/
-  engine_checkpoint=<checkpoint>/
-  date=YYYY-MM-DD/
-  part-00000.parquet
-```
-
-The contracts repo should define the columns and invariants. The Rust repo
-should own generation.
-
-## Step 4: Store H2H Games As Parquet
-
-Head-to-head games are not the same as search observations. They should be
-separate rows:
-
-```text
-game_id: utf8
-schema: utf8
-contract_version: utf8
-started_at: timestamp
-p0_engine_kind: utf8
-p0_engine_checkpoint: optional utf8
-p1_engine_kind: utf8
-p1_engine_checkpoint: optional utf8
-opening_book_id: optional utf8
-initial_position_key: fixed_size_binary[16] or utf8
-winner: int8  # 0 or 1
-plies: uint16
-terminal_reason: utf8
-seed: optional uint64
-time_budget_ms_per_move: optional uint32
-node_budget_per_move: optional uint64
-move_action_indices: list<uint8>
-position_keys: optional list<fixed_size_binary[16]>
-```
-
-This table feeds Elo estimation, opening-line win rates, and engine regression
-tests. It should be queryable with DuckDB without loading the opening-book
-SQLite file.
-
-## Step 5: Store Search Trace Summaries Separately
-
-Full traces can become enormous. The first contract should store root summaries
-and optional principal variations, not every simulation edge.
-
-Recommended `search-summary.v1` row:
-
-```text
+schema
+contract_version
 run_id
+row_id
 position_key
+ply
+side_to_move
+bitboards
+qfen
+legal_action_mask
 engine_kind
+engine_version
 engine_checkpoint
-budget
+config_label
+search_depth
+rollouts
+beam_width
+node_budget
+time_budget_ms
+seed
 root_value
 policy_visits[64]
 root_q_values[64]
@@ -213,135 +157,56 @@ tablebase_hits
 elapsed_ms
 ```
 
-If later debugging needs full traces, put them under a separate experimental
-contract and sample them aggressively.
+Boundary with `observation.v1`:
 
-## Step 6: Define The Training Dataset View
+- Keep `observation.v1` as the training/analytics corpus contract.
+- Use `search-summary.v1` only for reproducibility and diagnostic counters.
+- Duplicating `policy_visits`, `root_q_values`, and principal variation is
+  acceptable only so a diagnostic row can stand alone.
+- Counter semantics must be defined before registration. If an engine has no
+  tablebase or compact probe shortcut, `tablebase_hits` must be `0`.
 
-Training should read Parquet and produce model-ready batches:
+## Validators
 
-```text
-training_row = {
-  bitboards,
-  side_to_move,
-  legal_action_mask,
-  policy_target[64],
-  value_target,
-  sample_weight,
-  source_tags
-}
-```
+Implemented validators currently cover:
 
-Policy target:
+- manifest references and release consistency,
+- JSON schema/metadata parseability,
+- `selfplay.v1` JSONL fixtures,
+- `opening-book-summary.v1` artifacts,
+- SQLite opening-book metrics compared with an opening summary.
 
-```text
-policy_target[a] = visits[a] / sum_b visits[b]
-```
+Remaining validator work:
 
-Value target priority:
+- `observation.v1` fixture validation,
+- `game-result.v1` fixture validation,
+- `model-checkpoint.v1` fixture validation,
+- future `search-summary.v1` fixture validation after the contract is
+  registered.
 
-1. exact solved value,
-2. bounded retrograde value,
-3. strong search root value,
-4. H2H game outcome.
+## Remaining Milestones
 
-The training view can be materialized as Parquet shards. It should not be a new
-SQLite table.
+1. Generate and retain real Rust smoke artifacts for `observation.v1`,
+   `game-result.v1`, and `opening-book-summary.v1`.
+2. Add small checked-in fixtures for registered analytical contracts when the
+   generated shape is stable enough.
+3. Define and register `search-summary.v1` only after Rust exposes consistent
+   `expanded_nodes`, `transposition_hits`, `terminal_hits`, and
+   `tablebase_hits` semantics.
+4. Define compact runtime probe artifacts separately from the SQLite source of
+   truth.
+5. Add named opening/theory annotations after the graph identity and evidence
+   model stabilize.
 
-## Step 7: Add Minimal Fixtures
+## Review Checklist
 
-For each new contract, add tiny fixtures:
-
-- one valid opening-book SQLite or SQL fixture if binary SQLite is avoided in
-  the contracts repo,
-- one `observation.v1` JSONL equivalent fixture for validator smoke tests,
-- one tiny Parquet schema metadata file,
-- one H2H game fixture,
-- one model manifest fixture without weights.
-
-The actual large artifacts should stay out of git.
-
-## Step 8: Validation Rules
-
-Validators should reject:
-
-- invalid QFEN when QFEN is present,
-- bitboards with overlapping pieces,
-- illegal `side_to_move`,
-- policy visits on illegal actions,
-- empty policy targets,
-- terminal positions in initial-position datasets,
-- missing engine kind or budget metadata for observations,
-- contract-version mismatch,
-- unknown required schema ids.
-
-Validators should warn, not reject, when:
-
-- optional QFEN is omitted from Parquet,
-- policy priors are absent but visits are present,
-- principal variation is absent,
-- source confidence is low.
-
-## Step 9: Generation Milestones
-
-### Milestone A: Contract Shape
-
-- Add prose docs for `opening-book.v1`, `observation.v1`, and
-  `model-checkpoint.v1`.
-- Add one tiny fixture per contract.
-- Extend `contracts.json` only after validators exist.
-
-### Milestone B: Rust Export Smoke
-
-- Export 100 nonterminal valid initial positions.
-- Export one MCTS observation shard to Parquet.
-- Export one minimax observation shard to Parquet.
-- Export one beam observation shard to Parquet.
-- Export one H2H shard.
-
-### Milestone C: Depth-6 Knowledge Baseline
-
-- Generate complete canonical depth-6 graph.
-- Aggregate observations into book-policy rows.
-- Export Parquet training rows.
-- Train `qnue-small`.
-
-### Milestone D: Engine Integration
-
-- Add book probe before search.
-- Add model policy/value inference at leaves and roots.
-- Run H2H tournaments against current engines.
-- Record Elo proxy with reproducible configs.
-
-### Milestone E: Naming And Puzzles
-
-- Identify stable opening families.
-- Create named line annotations.
-- Generate forced-line puzzle candidates.
-- Attach evidence to each name and puzzle.
-
-## Review Checklist Before Implementation
-
-- Observations are Parquet, not SQLite.
+- Observations and games are Parquet-oriented analytical data, not SQLite graph
+  tables.
 - SQLite stores graph truth and aggregates, not every search row.
-- JSONL remains the small fixture format.
-- QFEN is optional in bulk data and required only where the contract says so.
-- Legal masks are present for training rows.
-- Engine kind, checkpoint, budget, and seed are recorded for reproducibility.
+- JSONL remains the small fixture/debug format.
+- QFEN is optional in bulk data unless a specific contract requires it.
+- Legal masks are present for training-oriented rows.
+- Engine kind, checkpoint, budget, and seed are recorded where reproducibility
+  depends on them.
 - Model manifests include input/output contracts and hashes.
 - Large generated artifacts stay out of the contracts repository.
-
-## Immediate Next Commit After This Note
-
-The next code-bearing contracts commit should add:
-
-1. `docs/opening-book-v1.md`
-2. `docs/observation-v1.md`
-3. `docs/model-checkpoint-v1.md`
-4. minimal JSON examples for each,
-5. validator scaffolding for the examples,
-6. a decision note that Parquet is the normative bulk observation format.
-
-That sequence prepares the Rust generator work without prematurely freezing a
-binary probe format or neural-network checkpoint format.
-

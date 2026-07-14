@@ -16,7 +16,7 @@ must conform to the contracts documented here.
 - Storage decisions: JSONL, CBOR, protobuf, Arrow, Parquet, SQLite, and tensor
   materializations.
 - Machine-readable schemas for externally exchanged data.
-- GitHub Actions for local validation, release smoke checks, and
+- GitHub workflows for local validation, release smoke checks, and
   cross-language producer/consumer checks.
 
 ## Contract Stability
@@ -35,6 +35,7 @@ The current baseline is:
 - `action-index.v1`
 - `selfplay.v1`
 - `tensor-board.v1`
+- `arrow-parquet-selfplay.v1`
 - `opening-book.v1`
 - `opening-book-summary.v1`
 - `observation.v1`
@@ -50,7 +51,7 @@ docs/                    Human-readable decisions and compatibility rules
 schemas/                 JSON Schemas and format metadata
 fixtures/                Golden fixtures used by implementations and CI
 scripts/                 Validation helpers with no third-party dependency
-actions/                 Reusable composite GitHub Actions
+actions/                 Optional composite actions for cross-repo smoke checks
 .github/workflows/       CI and reusable workflows
 contracts.json           Machine-readable contract/version manifest
 VERSION                  SemVer release of this contract set
@@ -59,9 +60,15 @@ VERSION                  SemVer release of this contract set
 Start from [docs/README.md](docs/README.md) for a hypertext index of the
 contracts, research notes, and machine-readable schemas.
 
+For implementation coverage, see
+[docs/implementation-status.md](docs/implementation-status.md). It records
+which registered contracts are currently produced, consumed, and parity-tested
+by the Python and Rust stacks.
+
 ## Using The Contracts From Another Repository
 
-Validate committed fixtures:
+Validate committed fixtures by checking out this repository and running the
+stdlib validator directly:
 
 ```yaml
 jobs:
@@ -69,10 +76,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: mberlanda/quantik-core-contracts/actions/validate-contracts@v1.0.0
         with:
-          fixture-glob: "tests/fixtures/**/*.jsonl"
-          expected-release: "1.1.0"
+          path: caller
+      - uses: actions/checkout@v4
+        with:
+          repository: mberlanda/quantik-core-contracts
+          ref: v1.1.0
+          path: contracts
+      - working-directory: caller
+        run: |
+          python3 ../contracts/scripts/validate_contracts.py \
+            --fixture-glob "tests/fixtures/**/*.jsonl" \
+            --expected-release 1.1.0
 ```
 
 Run an export/import smoke where one implementation produces a `selfplay.v1`
@@ -84,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: mberlanda/quantik-core-contracts/actions/cross-language-smoke@v1.0.0
+      - uses: mberlanda/quantik-core-contracts/actions/cross-language-smoke@v1.1.0
         with:
           artifact-path: "build/selfplay-smoke.jsonl"
           producer-command: "cargo run --bin quantik-selfplay -- --rows 8 --output build/selfplay-smoke.jsonl"
@@ -94,6 +109,25 @@ jobs:
 
 The exact producer/consumer commands are intentionally supplied by the caller
 repository. This contracts repo validates the artifact in the middle.
+
+## Release Artifacts
+
+Pushing a `v*` tag runs `.github/workflows/release-contracts.yml`. The workflow
+validates the contracts against the tag version, builds
+`quantik-core-contracts-<tag>.tar.gz`, uploads it as a workflow artifact, and
+attaches the archive plus its `.sha256` file to the GitHub Release for that tag.
+
+The archive contains:
+
+- `contracts.json` and `VERSION`
+- `docs/`
+- `schemas/`
+- `fixtures/`
+- `scripts/`
+- `actions/`
+- `.github/`
+- `README.md`
+- `release-manifest.json`
 
 ## Decision Summary
 

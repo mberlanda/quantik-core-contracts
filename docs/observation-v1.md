@@ -27,7 +27,7 @@ Use `opening-book.v1` for aggregated graph knowledge.
 
 ```text
 schema: observation.v1
-contract_version: 1.0.0
+contract_version: 1.1.0
 run_id: string
 row_id: uint64
 position_key: bytes or lowercase hex string
@@ -128,7 +128,7 @@ Recommended layout:
 
 ```text
 data/observations/
-  contract_version=1.0.0/
+  contract_version=1.1.0/
   engine_kind=mcts/
   engine_checkpoint=<checkpoint-or-none>/
   date=YYYY-MM-DD/
@@ -158,4 +158,3 @@ Readers may ignore:
 - optional priors,
 - optional root q-values,
 - optional principal variations.
-

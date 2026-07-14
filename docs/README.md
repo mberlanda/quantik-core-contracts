@@ -3,6 +3,36 @@
 This index is the hypertext entry point for the contracts repository. Use it to
 resume work across sessions and to find the document that owns each decision.
 
+## Current Release
+
+`VERSION` and `contracts.json` currently define release `1.1.0` with status
+`draft`.
+
+Registered contracts:
+
+- `qfen.v1`
+- `bitboard.v1`
+- `action-index.v1`
+- `selfplay.v1`
+- `tensor-board.v1`
+- `arrow-parquet-selfplay.v1`
+- `opening-book.v1`
+- `opening-book-summary.v1`
+- `observation.v1`
+- `game-result.v1`
+- `model-checkpoint.v1`
+
+Some registered contracts are schema/metadata definitions whose producer or
+fixture coverage is still landing in implementation repositories. See the
+contract-specific docs and status note before treating a registered ID as fully
+implemented end to end.
+
+Known proposed contracts that are not registered yet:
+
+- `search-summary.v1` for root-search diagnostics.
+- `opening-annotation.v1` for named theory overlays.
+- `opening-probe.v1` for compact runtime book/tablebase probes.
+
 ## Core Contracts
 
 - [Versioning](versioning.md): contract IDs, SemVer release rules, and
@@ -27,6 +57,11 @@ resume work across sessions and to find the document that owns each decision.
   D4 board symmetries, orbit size, and transposition keys.
 - [Consistency Checks](consistency-checks.md): validation expectations for
   cross-language implementations.
+- [Implementation Status](implementation-status.md): current Python/Rust
+  producer and consumer coverage for each registered contract.
+- [API Portability Testing](api-portability-testing.md): fixture/report/CI
+  design for proving Python, Rust, and future stacks expose the same contracted
+  behavior.
 
 ## Research Notes
 
@@ -40,8 +75,8 @@ resume work across sessions and to find the document that owns each decision.
   neural network architecture for a small engine evaluator/recommender intended
   to outperform larger static-book-only approaches.
 - [Opening Knowledge Data Preparation Next Steps](research/2026-07-13-opening-knowledge-data-preparation-next-steps.md):
-  implementation sequence for turning generated positions, observations,
-  search traces, and models into contracted artifacts.
+  compacted implementation-status note for generated positions, observations,
+  root-search summaries, probes, and models.
 - [Opening Book Storage Follow-Up From Depth-7 Generation](research/2026-07-14-opening-book-storage-followup.md):
   concrete contract and implementation lessons from the Rust depth-7 SQLite
   book, including compact edges, action-preserving identity, resume semantics,
@@ -68,3 +103,19 @@ resume work across sessions and to find the document that owns each decision.
   recommended Parquet physical schema for completed H2H games.
 - [`schemas/model-checkpoint-v1.json`](../schemas/model-checkpoint-v1.json):
   metadata manifest shape for model checkpoints.
+
+## Validators And Workflows
+
+- [`scripts/validate_contracts.py`](../scripts/validate_contracts.py):
+  dependency-light manifest, schema JSON, and `selfplay.v1` fixture validator.
+- [`scripts/validate_opening_book_summary.py`](../scripts/validate_opening_book_summary.py):
+  `opening-book-summary.v1` artifact validator/comparator.
+- [`scripts/validate_opening_book_artifact.py`](../scripts/validate_opening_book_artifact.py):
+  SQLite opening-book artifact metrics check against
+  `opening-book-summary.v1`.
+- [`.github/workflows/validate-contracts.yml`](../.github/workflows/validate-contracts.yml):
+  repository-level manifest/schema/fixture validation.
+- [`.github/workflows/opening-book-release-consistency.yml`](../.github/workflows/opening-book-release-consistency.yml):
+  cross-stack opening-book summary consistency check.
+- [`.github/workflows/release-contracts.yml`](../.github/workflows/release-contracts.yml):
+  tag-triggered release bundle packaging and GitHub Release asset upload.

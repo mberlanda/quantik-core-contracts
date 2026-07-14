@@ -268,7 +268,7 @@ A future model manifest should include:
 {
   "schema": "model-checkpoint.v1",
   "model_id": "quantik-qnue-small",
-  "contract_version": "1.0.0",
+  "contract_version": "1.1.0",
   "input_contracts": ["bitboard.v1", "action-index.v1"],
   "output_contract": "policy-value.v1",
   "feature_hash": "sha256:...",
@@ -326,4 +326,3 @@ Mitigations:
   https://lczero.org/dev/wiki/technical-explanation-of-leela-chess-zero/
 - Companion strategy note:
   [Doing Better Than A Larger Opening Book](2026-07-13-doing-better-than-a-larger-opening-book.md)
-

@@ -33,7 +33,7 @@ Every book artifact must identify:
 
 ```text
 schema = opening-book.v1
-contract_version = 1.0.0
+contract_version = 1.1.0
 book_id
 created_at
 generator
