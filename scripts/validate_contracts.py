@@ -40,6 +40,7 @@ ARROW_PARQUET_SELFPLAY_RELEASE_METADATA_KEYS = [
     "contracts_release",
     "contract_version",
 ]
+ARROW_PARQUET_SELFPLAY_SCHEMA_RELEASE_VALUE = "contracts.json.release_version"
 
 
 def fail(message: str) -> None:
@@ -126,6 +127,18 @@ def validate_arrow_parquet_selfplay_metadata(
             f"{path}: arrow-parquet-selfplay.v1 logical_contract must be "
             "selfplay.v1"
         )
+    parquet_metadata = document.get("parquet_metadata")
+    if not isinstance(parquet_metadata, dict):
+        fail(f"{path}: arrow-parquet-selfplay.v1 parquet_metadata must be an object")
+    for key, expected_value in ARROW_PARQUET_SELFPLAY_METADATA.items():
+        if parquet_metadata.get(key) != expected_value:
+            fail(f"{path}: parquet_metadata.{key} must be {expected_value}")
+    for key in ARROW_PARQUET_SELFPLAY_RELEASE_METADATA_KEYS:
+        if parquet_metadata.get(key) != ARROW_PARQUET_SELFPLAY_SCHEMA_RELEASE_VALUE:
+            fail(
+                f"{path}: parquet_metadata.{key} must be "
+                f"{ARROW_PARQUET_SELFPLAY_SCHEMA_RELEASE_VALUE}"
+            )
 
     columns = document.get("columns")
     if not isinstance(columns, list):

@@ -78,6 +78,22 @@ class ContractsValidatorTests(unittest.TestCase):
         document.pop("storage")
         self._run_validator_with_schema(document, "storage must be parquet")
 
+    def test_arrow_parquet_selfplay_requires_parquet_metadata_physical_schema(self) -> None:
+        document = self._load_arrow_parquet_schema()
+        document["parquet_metadata"]["physical_schema"] = "selfplay.v1"
+        self._run_validator_with_schema(
+            document,
+            "parquet_metadata.physical_schema must be arrow-parquet-selfplay.v1",
+        )
+
+    def test_arrow_parquet_selfplay_requires_parquet_metadata_release_placeholder(self) -> None:
+        document = self._load_arrow_parquet_schema()
+        document["parquet_metadata"]["contracts_release"] = "1.1.0"
+        self._run_validator_with_schema(
+            document,
+            "parquet_metadata.contracts_release must be contracts.json.release_version",
+        )
+
     def test_arrow_parquet_selfplay_rejects_extra_column(self) -> None:
         document = self._load_arrow_parquet_schema()
         document["columns"].append({"name": "extra", "type": "utf8", "required": False})
