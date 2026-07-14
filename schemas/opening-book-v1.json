@@ -37,6 +37,8 @@
   },
   "notes": [
     "opening-book.v1 is a canonical graph contract.",
+    "Edge identity must preserve action_index; do not collapse edges by parent and child alone.",
+    "High-cardinality edge tables should prefer integer node_id references and encoded actions over repeated keys and move text.",
     "Raw search observations belong in observation.v1.",
     "QFEN is debug/interchange text, not the required hot lookup key."
   ]

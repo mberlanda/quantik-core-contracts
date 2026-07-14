@@ -168,6 +168,9 @@ Decision:
 SQLite is preferred for graph/index workflows, not as the main ML training
 corpus format. For opening-book scale and storage tradeoffs, see
 [Opening Book Scale, Storage, and Proficiency Tradeoffs for Quantik](research/2026-07-13-opening-book-scale-and-storage.md).
+For the concrete depth-7 follow-up on compact edges, action identity, and
+resumable search semantics, see
+[Opening Book Storage Follow-Up From Depth-7 Generation](research/2026-07-14-opening-book-storage-followup.md).
 
 ## Tensor Stores
 

@@ -7,6 +7,10 @@ The preferred source-of-truth storage is SQLite. Implementations may derive
 compact probe artifacts from the SQLite source, but those artifacts must retain
 the same node, edge, value, policy, and provenance semantics.
 
+For the storage lessons learned from the first depth-7 Rust-generated SQLite
+book, see
+[Opening Book Storage Follow-Up From Depth-7 Generation](research/2026-07-14-opening-book-storage-followup.md).
+
 ## Scope
 
 Opening books store:
@@ -102,6 +106,10 @@ exact-probe artifact. Use `inferred` for neural or statistical labels.
 
 An edge represents a legal action from a parent canonical node to a child
 canonical node.
+
+Edge identity must preserve the legal action. Symmetry may map multiple legal
+actions from the same parent to the same canonical child, so implementations must
+not collapse edges by `(parent, child)` alone.
 
 Required edge fields:
 
@@ -217,7 +225,7 @@ CREATE TABLE edges (
   edge_flags TEXT NOT NULL,
   transform_id INTEGER,
   PRIMARY KEY (parent_node_id, action_index, child_node_id)
-);
+) WITHOUT ROWID;
 
 CREATE TABLE book_policy (
   node_id INTEGER NOT NULL,
@@ -234,6 +242,11 @@ CREATE TABLE book_policy (
 
 Implementations may add indexes and additive columns. Readers must ignore
 unknown additive columns when possible.
+
+SQLite builders may use text status fields while the schema is evolving, but
+high-cardinality tables should prefer integer ids and compact encoded actions.
+Human-readable moves belong in debug views or export layers, not in the hot edge
+identity.
 
 ## Compatibility Rules
 
@@ -254,4 +267,3 @@ Readers may ignore:
 - human annotations,
 - sparse policy fields they do not use,
 - debug QFEN fields when bitboards are present.
-

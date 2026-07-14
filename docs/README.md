@@ -40,6 +40,10 @@ resume work across sessions and to find the document that owns each decision.
 - [Opening Knowledge Data Preparation Next Steps](research/2026-07-13-opening-knowledge-data-preparation-next-steps.md):
   implementation sequence for turning generated positions, observations,
   search traces, and models into contracted artifacts.
+- [Opening Book Storage Follow-Up From Depth-7 Generation](research/2026-07-14-opening-book-storage-followup.md):
+  concrete contract and implementation lessons from the Rust depth-7 SQLite
+  book, including compact edges, action-preserving identity, resume semantics,
+  and probe artifacts.
 
 ## Machine-Readable Contracts
 
