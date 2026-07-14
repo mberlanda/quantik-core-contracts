@@ -18,6 +18,18 @@ from typing import Any
 QFEN_RE = re.compile(r"^[A-Da-d.]{4}/[A-Da-d.]{4}/[A-Da-d.]{4}/[A-Da-d.]{4}$")
 SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$")
 
+ARROW_PARQUET_SELFPLAY_COLUMNS = [
+    ("logical_schema", "utf8", True),
+    ("contract_version", "utf8", True),
+    ("game_id", "uint64", True),
+    ("ply", "uint16", True),
+    ("side_to_move", "uint8", True),
+    ("bitboards", "fixed_size_list<uint16,8>", True),
+    ("policy_visits", "fixed_size_list<uint32,64>", True),
+    ("value", "int8", True),
+    ("qfen", "utf8", False),
+]
+
 
 def fail(message: str) -> None:
     raise ValueError(message)
@@ -93,9 +105,61 @@ def validate_selfplay_row(
         fail("value must be exactly -1.0 or 1.0")
 
 
+def validate_arrow_parquet_selfplay_metadata(
+    document: dict[str, Any], path: Path
+) -> None:
+    if document.get("storage") != "parquet":
+        fail(f"{path}: arrow-parquet-selfplay.v1 storage must be parquet")
+    if document.get("logical_contract") != "selfplay.v1":
+        fail(
+            f"{path}: arrow-parquet-selfplay.v1 logical_contract must be "
+            "selfplay.v1"
+        )
+
+    columns = document.get("columns")
+    if not isinstance(columns, list):
+        fail(f"{path}: arrow-parquet-selfplay.v1 columns must be a list")
+    if len(columns) != len(ARROW_PARQUET_SELFPLAY_COLUMNS):
+        fail(
+            f"{path}: arrow-parquet-selfplay.v1 must define "
+            f"{len(ARROW_PARQUET_SELFPLAY_COLUMNS)} columns"
+        )
+
+    for index, (column, expected) in enumerate(
+        zip(columns, ARROW_PARQUET_SELFPLAY_COLUMNS, strict=True)
+    ):
+        expected_name, expected_type, expected_required = expected
+        if not isinstance(column, dict):
+            fail(f"{path}: column {index} must be an object")
+        if column.get("name") != expected_name:
+            fail(f"{path}: column {index} name must be {expected_name}")
+        if column.get("type") != expected_type:
+            fail(f"{path}: column {expected_name} type must be {expected_type}")
+        if column.get("required") is not expected_required:
+            fail(
+                f"{path}: column {expected_name} required must be "
+                f"{expected_required}"
+            )
+
+    logical_schema = columns[0]
+    if logical_schema.get("allowed") != ["selfplay.v1"]:
+        fail(f"{path}: logical_schema allowed values must be ['selfplay.v1']")
+    side_to_move = columns[4]
+    if side_to_move.get("allowed") != [0, 1]:
+        fail(f"{path}: side_to_move allowed values must be [0, 1]")
+    value = columns[7]
+    if value.get("allowed") != [-1, 1]:
+        fail(f"{path}: value allowed values must be [-1, 1]")
+
+
 def validate_json_file(path: Path) -> None:
     with path.open(encoding="utf-8") as handle:
-        json.load(handle)
+        document = json.load(handle)
+    if (
+        isinstance(document, dict)
+        and document.get("schema") == "arrow-parquet-selfplay.v1"
+    ):
+        validate_arrow_parquet_selfplay_metadata(document, path)
 
 
 def validate_jsonl_file(

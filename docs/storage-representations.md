@@ -128,9 +128,13 @@ Decision:
 Parquet is the preferred persisted bulk-data format. Write batches/shards, not
 single-row appends.
 
-Recommended self-play columns:
+Recommended self-play columns are registered as
+`arrow-parquet-selfplay.v1`. They preserve `selfplay.v1` row semantics while
+using physical columns that are efficient for training and scanning:
 
 ```text
+logical_schema: utf8 = "selfplay.v1"
+contract_version: utf8
 game_id: uint64
 ply: uint16
 side_to_move: uint8
@@ -141,7 +145,11 @@ qfen: optional utf8
 ```
 
 Use dense `policy_visits[64]` for ML-oriented datasets. Sparse policy lists are
-allowed for JSONL fixtures and compact debug exports.
+allowed for JSONL fixtures and compact debug exports. `bitboards` are the
+physical board column; optional `qfen` is retained for debug and parity checks.
+The Parquet file or table schema should identify the physical contract as
+`arrow-parquet-selfplay.v1`; row semantics should identify the logical contract
+as `selfplay.v1`.
 
 ## SQLite
 
