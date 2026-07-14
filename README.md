@@ -35,6 +35,10 @@ The current baseline is:
 - `action-index.v1`
 - `selfplay.v1`
 - `tensor-board.v1`
+- `opening-book.v1`
+- `observation.v1`
+- `game-result.v1`
+- `model-checkpoint.v1`
 
 See [docs/versioning.md](docs/versioning.md) for the full versioning model.
 

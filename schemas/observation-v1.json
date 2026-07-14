@@ -1,0 +1,39 @@
+{
+  "schema": "observation.v1",
+  "description": "Recommended Arrow/Parquet physical schema for Quantik engine observations.",
+  "storage": "parquet",
+  "columns": [
+    { "name": "schema", "type": "utf8", "required": true },
+    { "name": "contract_version", "type": "utf8", "required": true },
+    { "name": "run_id", "type": "utf8", "required": true },
+    { "name": "row_id", "type": "uint64", "required": true },
+    { "name": "position_key", "type": "fixed_size_binary[16] or utf8", "required": true },
+    { "name": "ply", "type": "uint16", "required": true },
+    { "name": "side_to_move", "type": "uint8", "required": true },
+    { "name": "bitboards", "type": "fixed_size_list<uint16,8>", "required": true },
+    { "name": "qfen", "type": "utf8", "required": false },
+    { "name": "legal_action_mask", "type": "uint64", "required": true },
+    { "name": "engine_kind", "type": "dictionary utf8", "required": true },
+    { "name": "engine_checkpoint", "type": "utf8", "required": false },
+    { "name": "engine_version", "type": "utf8", "required": true },
+    { "name": "search_depth", "type": "uint16", "required": false },
+    { "name": "rollouts", "type": "uint32", "required": false },
+    { "name": "beam_width", "type": "uint16", "required": false },
+    { "name": "node_budget", "type": "uint64", "required": false },
+    { "name": "time_budget_ms", "type": "uint32", "required": false },
+    { "name": "elapsed_ms", "type": "uint32", "required": true },
+    { "name": "seed", "type": "uint64", "required": false },
+    { "name": "policy_visits", "type": "fixed_size_list<uint32,64>", "required": true },
+    { "name": "policy_priors", "type": "fixed_size_list<float32,64>", "required": false },
+    { "name": "root_q_values", "type": "fixed_size_list<float32,64>", "required": false },
+    { "name": "value", "type": "float32", "required": true },
+    { "name": "value_source", "type": "dictionary utf8", "required": true },
+    { "name": "source_confidence", "type": "float32", "required": true },
+    { "name": "principal_variation", "type": "list<uint8>", "required": false }
+  ],
+  "notes": [
+    "observation.v1 is bulk analytical data.",
+    "Use Parquet for large observation and training datasets.",
+    "policy_visits uses action_index = shape * 16 + position."
+  ]
+}
