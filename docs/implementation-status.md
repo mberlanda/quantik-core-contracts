@@ -26,7 +26,7 @@ Status terms:
 | `selfplay.v1` | JSONL reader validates schema, optional release, QFEN, side-to-move, legal policy, duplicate actions, value, and the Rust-generated smoke fixture | Contract parser validates release, QFEN, side-to-move, legal policy, duplicate actions, and value; self-play builder emits release metadata and a checked-in JSONL smoke fixture | Logical JSONL fixture/debug parity is implemented across Python and Rust. Bulk training storage should use `arrow-parquet-selfplay.v1` physical columns. |
 | `tensor-board.v1` | Tensor materialization from QFEN | Core game state can derive tensors through consumers | Storage guidance / derived representation; no standalone artifact validator. |
 | `arrow-parquet-selfplay.v1` | Optional PyArrow reader/writer roundtrips real Parquet bytes, validates metadata, physical schema, bitboards, dense `policy_visits[64]`, integer value, and optional QFEN | Optional Arrow/Parquet feature reader/writer roundtrips real Parquet bytes, validates metadata, physical schema, bitboards, dense `policy_visits[64]`, integer value, and optional QFEN | Real Parquet I/O is implemented in both stacks. Metadata expectations are documented and covered by a dependency-free fixture; cross-stack file interchange fixtures are still pending. |
-| `opening-book.v1` | SQLite/opening-book tooling and summary consumption path | SQLite opening-book producer/inspector | Implemented as a graph artifact path, with summary checks covering cross-stack drift; general graph validators are still lightweight. |
+| `opening-book.v1` | SQLite/opening-book tooling and summary consumption path | SQLite opening-book producer/inspector | Implemented as a graph artifact path, with summary checks covering cross-stack drift and a stricter SQLite artifact validator for graph shape, key/reference integrity, depths, terminal flags, and action identity. |
 | `opening-book-summary.v1` | Producer emits summary JSON with release `1.1.0` | Producer emits summary JSON with release `1.1.0` | Cross-stack summary artifact is implemented and validated by contracts scripts. |
 | `observation.v1` | JSONL reader plus optional PyArrow Parquet reader/writer validate release `1.1.0`, metadata, physical schema, bitboards, legal mask, policy visits, and scalar fields | Benchmark exporter emits release `1.1.0`; consumer parser plus optional Arrow/Parquet reader/writer validate release, metadata, physical schema, bitboards, legal mask, policy visits, and scalar fields | Rust/Python Parquet parity is implemented for the current required physical column surface. |
 | `game-result.v1` | JSONL reader plus optional PyArrow Parquet reader/writer validate release `1.1.0`, metadata, physical schema, winner, plies, move indices, and required engine fields | Benchmark exporter emits release `1.1.0`; consumer parser plus optional Arrow/Parquet reader/writer validate release, metadata, physical schema, winner, plies, move indices, and required engine fields | Rust/Python Parquet parity is implemented for the current required physical column surface. |
@@ -47,6 +47,8 @@ Status terms:
 - `selfplay.v1` has checked-in JSONL fixture/debug evidence, including a
   Rust-builder smoke fixture that Python consumes. Bulk training-data parity
   should use `arrow-parquet-selfplay.v1`.
-- `opening-book.v1` should eventually have stricter graph-level validators for
-  full SQLite artifacts, beyond aggregate summary consistency.
+- `opening-book.v1` now has graph-level SQLite artifact validation beyond
+  aggregate summary consistency. It remains structural: it checks keys,
+  references, depths, terminal flags, and action identity without
+  reimplementing Quantik legal-move generation.
 - `search-summary.v1` is proposed but not registered.

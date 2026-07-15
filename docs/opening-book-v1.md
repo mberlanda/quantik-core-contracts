@@ -267,3 +267,24 @@ Readers may ignore:
 - human annotations,
 - sparse policy fields they do not use,
 - debug QFEN fields when bitboards are present.
+
+## Artifact Validation
+
+The contracts repository ships
+`scripts/validate_opening_book_artifact.py` for SQLite artifacts and paired
+`opening-book-summary.v1` reports. The validator is intentionally structural so
+it can run without importing a Python or Rust Quantik engine. It checks:
+
+- `book_metadata` schema/release when metadata is present,
+- one non-empty, contiguous depth range from root through the expected depth,
+- 18-byte `canonical_key` blobs and optional `node_id` uniqueness,
+- edge endpoint references through either canonical keys or node ids,
+- parent/child depth progression,
+- no outgoing edges from terminal or horizon rows,
+- action identity through `action_index` when present or Rust-style `move`
+  strings such as `P0S2P5`,
+- summary totals and per-depth metrics against both Rust and Python summaries.
+
+The validator does not recompute legal moves from board state. Implementations
+remain responsible for engine-level checks that a stored action is legal for a
+stored position.
