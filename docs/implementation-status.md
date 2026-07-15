@@ -51,4 +51,8 @@ Status terms:
   aggregate summary consistency. It remains structural: it checks keys,
   references, depths, terminal flags, and action identity without
   reimplementing Quantik legal-move generation.
-- `search-summary.v1` is proposed but not registered.
+- `search-summary.v1` is proposed but not registered. Current Rust/Python
+  audits found useful partial surfaces but no portable semantics yet for
+  `expanded_nodes`, `transposition_hits`, `terminal_hits`, `tablebase_hits`,
+  root policy visits, and root Q-value scale. See
+  [Search Summary v1](search-summary-v1.md) before adding producers.

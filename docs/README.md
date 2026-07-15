@@ -29,7 +29,7 @@ implemented end to end.
 
 Known proposed contracts that are not registered yet:
 
-- `search-summary.v1` for root-search diagnostics.
+- [`search-summary.v1`](search-summary-v1.md) for root-search diagnostics.
 - `opening-annotation.v1` for named theory overlays.
 - `opening-probe.v1` for compact runtime book/tablebase probes.
 
@@ -51,6 +51,8 @@ Known proposed contracts that are not registered yet:
   engine comparison, and opening-line statistics.
 - [Model Checkpoint v1](model-checkpoint-v1.md): metadata manifest for
   policy/value model artifacts and runtime compatibility checks.
+- [Search Summary v1](search-summary-v1.md): proposed root-search diagnostic
+  row and the required Rust/Python telemetry gates before registration.
 - [Storage Representations](storage-representations.md): JSONL, CBOR,
   protobuf, Arrow, Parquet, SQLite, and tensor-store guidance.
 - [Symmetry And Transposition](symmetry-transposition.md): canonicalization,

@@ -119,6 +119,13 @@ calibration references.
 
 ## Proposed Remaining Contract: `search-summary.v1`
 
+Current status: still proposed and not registered. The living readiness note is
+[Search Summary v1](../search-summary-v1.md). Rust/Python audits confirmed that
+root values, PVs, and some engine-specific counts exist, but portable
+`expanded_nodes`, `transposition_hits`, `terminal_hits`, `tablebase_hits`,
+`policy_visits[64]`, and `root_q_values[64]` semantics are not yet implemented
+across MCTS, beam, and minimax.
+
 Full search traces can become enormous, so do not standardize full per-edge or
 per-simulation traces in v1. The proposed first artifact should be one
 root-search diagnostic row per completed search.
