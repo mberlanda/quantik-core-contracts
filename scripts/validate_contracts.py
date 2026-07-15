@@ -84,6 +84,8 @@ IMPLEMENTED_PARQUET_CONTRACTS = {
     "game-result.v1": GAME_RESULT_PARQUET_COLUMNS,
 }
 
+API_PORTABILITY_FIXTURE_SCHEMA = "api-portability-fixtures.v1"
+
 PARQUET_RELEASE_METADATA_KEYS = ["contracts_release", "contract_version"]
 PARQUET_SCHEMA_RELEASE_VALUE = "contracts.json.release_version"
 
@@ -344,6 +346,42 @@ def validate_implemented_parquet_metadata_manifest(
         fail(f"{path}: columns must be {expected_columns}")
 
 
+def validate_api_portability_fixture(
+    document: dict[str, Any], path: Path, expected_contract_version: str | None
+) -> None:
+    contract_version = document.get("contract_version")
+    if not isinstance(contract_version, str):
+        fail(f"{path}: contract_version must be a string")
+    if expected_contract_version is not None and contract_version != expected_contract_version:
+        fail(f"{path}: contract_version must be {expected_contract_version}")
+
+    cases = document.get("game_state_cases")
+    if not isinstance(cases, list) or not cases:
+        fail(f"{path}: game_state_cases must be a non-empty list")
+    seen: set[str] = set()
+    for index, case in enumerate(cases):
+        if not isinstance(case, dict):
+            fail(f"{path}: game_state_cases[{index}] must be an object")
+        case_id = case.get("case_id")
+        if not isinstance(case_id, str) or not case_id:
+            fail(f"{path}: game_state_cases[{index}].case_id must be a non-empty string")
+        if case_id in seen:
+            fail(f"{path}: duplicate api portability case_id {case_id}")
+        seen.add(case_id)
+        validate_qfen(case.get("qfen"))
+        move = case.get("move")
+        if move is None:
+            continue
+        if not isinstance(move, dict):
+            fail(f"{path}: game_state_cases[{case_id}].move must be an object")
+        shape = expect_int(move, "shape")
+        position = expect_int(move, "position")
+        if shape < 0 or shape > 3:
+            fail(f"{path}: game_state_cases[{case_id}].move.shape must be in 0..3")
+        if position < 0 or position > 15:
+            fail(f"{path}: game_state_cases[{case_id}].move.position must be in 0..15")
+
+
 def validate_json_file(path: Path, expected_contract_version: str | None) -> None:
     with path.open(encoding="utf-8") as handle:
         document = json.load(handle)
@@ -361,6 +399,8 @@ def validate_json_file(path: Path, expected_contract_version: str | None) -> Non
         )
     if isinstance(document, dict) and document.get("schema") in IMPLEMENTED_PARQUET_CONTRACTS:
         validate_implemented_parquet_schema(document, path, document["schema"])
+    if isinstance(document, dict) and document.get("schema") == API_PORTABILITY_FIXTURE_SCHEMA:
+        validate_api_portability_fixture(document, path, expected_contract_version)
     if isinstance(document, dict):
         schema = document.get("schema")
         if isinstance(schema, str) and schema.endswith(".metadata"):
