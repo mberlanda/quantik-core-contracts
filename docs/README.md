@@ -112,6 +112,8 @@ Known proposed contracts that are not registered yet:
 - [`fixtures/parquet/game-result-v1-metadata.json`](../fixtures/parquet/game-result-v1-metadata.json):
   dependency-free metadata and column-order manifest for `game-result.v1`
   Parquet writers/readers.
+- [`fixtures/selfplay/selfplay-v1-rust-smoke.jsonl`](../fixtures/selfplay/selfplay-v1-rust-smoke.jsonl):
+  Rust-builder JSONL smoke rows for `selfplay.v1` consumers.
 
 ## Validators And Workflows
 
