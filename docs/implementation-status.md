@@ -32,6 +32,13 @@ Status terms:
 | `game-result.v1` | JSONL reader plus optional PyArrow Parquet reader/writer validate release `1.1.0`, metadata, physical schema, winner, plies, move indices, and required engine fields | Benchmark exporter emits release `1.1.0`; consumer parser plus optional Arrow/Parquet reader/writer validate release, metadata, physical schema, winner, plies, move indices, and required engine fields | Rust/Python Parquet parity is implemented for the current required physical column surface. |
 | `model-checkpoint.v1` | Manifest loader/parser validates release `1.1.0`, fields, supported inputs, weights format, and fixture | Manifest parser validates release `1.1.0`, fields, supported inputs, weights format, and fixture | Rust/Python manifest parity is implemented. |
 
+## Cross-Stack Validation Workflows
+
+| Workflow | Python | Rust | Current status |
+| --- | --- | --- | --- |
+| `api-portability-report.v1` | `quantik-api-portability-report` reads `fixtures/api-portability/game-state-v1.json` and emits normalized QFEN, bitboards, canonical QFEN/key, orbit size, legal actions, terminal/winner, and move projection rows | `quantik-portability-report` emits the same normalized report shape from the same contracts fixture | Implemented in both stacks as a cross-stack validation workflow, not a registered artifact contract. The contracts comparator checks exact release, contract IDs, case IDs, and per-case JSON equality. |
+| Training dataset view | `quantik-core-py` exposes artifact readers and tensor helpers consumed by `quantik-models-py` | Rust produces `observation.v1`, `game-result.v1`, and `selfplay.v1` rows consumed by the model repo | Implemented as a `quantik-models-py` workflow over registered artifacts, not a new contract ID. See [Training Dataset View](training-dataset-view.md). |
+
 ## Known Gaps
 
 - `arrow-parquet-selfplay.v1` has real Parquet reader/writer roundtrip tests in
@@ -56,3 +63,11 @@ Status terms:
   `expanded_nodes`, `transposition_hits`, `terminal_hits`, `tablebase_hits`,
   root policy visits, and root Q-value scale. See
   [Search Summary v1](search-summary-v1.md) before adding producers.
+- `api-portability-report.v1` is implemented as a cross-stack validation
+  workflow, not a registered artifact contract. Keep its fixture, report shape,
+  comparator, and implementation CLI docs synchronized after every Python/Rust
+  push that changes public API behavior.
+- The training dataset view is implemented in `quantik-models-py` as a NumPy
+  artifact generator over `observation.v1` and `selfplay.v1`. Cross-stack
+  portability still depends on Rust/Python agreement for the underlying
+  artifact contracts, plus future checked-in Parquet interchange fixtures.

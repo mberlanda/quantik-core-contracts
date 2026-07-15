@@ -27,6 +27,63 @@ fixture coverage is still landing in implementation repositories. See the
 contract-specific docs and status note before treating a registered ID as fully
 implemented end to end.
 
+Documentation maintenance rules:
+
+- Keep implemented contract documentation under this `docs/` tree and link it
+  from this index. Do not leave implemented contract docs only in research
+  notes, PR descriptions, or implementation repositories.
+- Update [Implementation Status](implementation-status.md) after every merged
+  implementation PR that changes producer/consumer coverage.
+- When Rust/Python enforcement changes a contract surface, update the relevant
+  contract doc and any local workflow docs before or with the implementation
+  push.
+
+## Implementation PR Checklist
+
+Use this flow when a contract or cross-stack validation surface changes:
+
+1. Update the contracts repository first when the shared behavior changes:
+   the relevant `docs/*.md` page, `docs/implementation-status.md`, schemas,
+   fixtures, validators, and this index if a new page is added.
+2. Keep implemented contract docs under `docs/`. Research notes may motivate a
+   design, but implemented behavior must be documented in this folder.
+3. Implement one contract or validation workflow at a time in Rust and Python,
+   keeping report shapes, metadata checks, release handling, terminal/winner
+   semantics, and fixture expectations aligned.
+4. For each implementation PR, add a PR comment linking the relevant contract
+   or workflow doc, then request Copilot review:
+
+   ```bash
+   gh pr edit <PR_NUMBER> --add-reviewer @copilot
+   ```
+
+5. Wait for Copilot feedback before merging. The operating cadence is roughly
+   5 minutes, then 10 minutes, then 20 minutes when needed. Fetch current
+   inline comments and address actionable feedback before merging.
+6. Require green CI before merge. For API portability changes, regenerate both
+   reports and compare them:
+
+   ```bash
+   quantik-api-portability-report \
+     --contracts-root /path/to/quantik-core-contracts \
+     --output build/python-api-portability-report.json
+
+   cargo run -p quantik-core --bin quantik-portability-report -- \
+     --contracts-root /path/to/quantik-core-contracts \
+     --output build/rust-api-portability-report.json
+
+   python3 /path/to/quantik-core-contracts/scripts/compare_api_portability_reports.py \
+     build/python-api-portability-report.json \
+     build/rust-api-portability-report.json
+   ```
+
+7. Squash merge implementation PRs after Copilot comments are addressed and CI
+   is green. After merge, remove only the merged temporary worktrees and prune
+   stale worktree metadata.
+8. After the merge, update `docs/implementation-status.md` if the PR changed
+   producer/consumer coverage or parity state. If the docs update was missed,
+   make a follow-up docs PR before starting the next contract slice.
+
 Known proposed contracts that are not registered yet:
 
 - [`search-summary.v1`](search-summary-v1.md) for root-search diagnostics.
@@ -53,6 +110,14 @@ Known proposed contracts that are not registered yet:
   policy/value model artifacts and runtime compatibility checks.
 - [Search Summary v1](search-summary-v1.md): proposed root-search diagnostic
   row and the required Rust/Python telemetry gates before registration.
+- [End-to-End Data Pipeline](end-to-end-pipeline.md): reproducible commands
+  for generating positions, opening books, observations, H2H reports, contract
+  rows, Parquet artifacts, and self-play training data.
+- [Training Dataset View](training-dataset-view.md): NumPy-first materialized
+  view owned by `quantik-models-py` over registered training artifacts.
+- [50-100MB Policy/Value Model Project](policy-value-model-project.md): data,
+  artifact, runtime, autoplay, and evaluation plan for the compact portable
+  evaluator in `quantik-models-py`.
 - [Storage Representations](storage-representations.md): JSONL, CBOR,
   protobuf, Arrow, Parquet, SQLite, and tensor-store guidance.
 - [Symmetry And Transposition](symmetry-transposition.md): canonicalization,

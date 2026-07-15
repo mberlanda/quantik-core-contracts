@@ -117,7 +117,10 @@ Recommended report shape:
       "case_id": "empty-board",
       "qfen": "..../..../..../....",
       "bitboards": [0, 0, 0, 0, 0, 0, 0, 0],
+      "side_to_move": 0,
       "canonical_qfen": "..../..../..../....",
+      "canonical_key": "010200000000000000000000000000000000",
+      "orbit_size": 1,
       "legal_action_mask": "0xffffffffffffffff",
       "legal_action_indices": [
         0, 1, 2, 3, 4, 5, 6, 7,
@@ -128,7 +131,16 @@ Recommended report shape:
         40, 41, 42, 43, 44, 45, 46, 47,
         48, 49, 50, 51, 52, 53, 54, 55,
         56, 57, 58, 59, 60, 61, 62, 63
-      ]
+      ],
+      "terminal": false,
+      "winner": "none",
+      "move": {
+        "shape": 0,
+        "position": 0,
+        "action_index": 0,
+        "is_legal": true,
+        "after_qfen": "A.../..../..../...."
+      }
     }
   ]
 }
@@ -136,6 +148,12 @@ Recommended report shape:
 
 The report schema is intentionally proposed here, not yet registered in
 `contracts.json`.
+
+The current Python and Rust implementations also require fixture metadata
+(`schema == "api-portability-fixtures.v1"` and `contract_version` matching
+`contracts.json.release_version`), require each fixture case to include a
+`move`, and treat no-legal-move positions as terminal with the player to move
+losing.
 
 ### 4. Cross-Language Smoke
 
