@@ -49,7 +49,7 @@ is weak.
 Current materialization command:
 
 ```bash
-cd /Users/mauroberlanda/Code/quantik-ns/quantik-models-py
+cd "$QUANTIK_NS/quantik-models-py"
 quantik-models-materialize \
   --observations-jsonl /path/to/observations-v1.jsonl \
   --output-npz /path/to/training-view-observations.npz

@@ -23,8 +23,20 @@ quantik-models-py       -> dataset materialization, training, evaluation, export
 Setup:
 
 ```bash
-export CORE_PY=/Users/mauroberlanda/Code/quantik-ns/quantik/quantik-core-py
-export MODELS=/Users/mauroberlanda/Code/quantik-ns/quantik-models-py
+export QUANTIK_NS="$HOME/Code/quantik-ns"
+mkdir -p "$QUANTIK_NS"
+cd "$QUANTIK_NS"
+
+git clone https://github.com/mberlanda/quantik-core-contracts.git
+git clone https://github.com/mberlanda/quantik-core-rust.git
+git clone https://github.com/mberlanda/quantik-core-py.git
+git clone https://github.com/mberlanda/quantik-models-py.git
+```
+
+```bash
+export QUANTIK_NS="${QUANTIK_NS:-$HOME/Code/quantik-ns}"
+export CORE_PY="$QUANTIK_NS/quantik-core-py"
+export MODELS="$QUANTIK_NS/quantik-models-py"
 cd "$MODELS"
 test -d .venv || python -m venv .venv
 .venv/bin/python -m pip install -e "${CORE_PY}[arrow]"
