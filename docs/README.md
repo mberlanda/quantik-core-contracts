@@ -116,6 +116,8 @@ Known proposed contracts that are not registered yet:
   Parquet writers/readers.
 - [`fixtures/selfplay/selfplay-v1-rust-smoke.jsonl`](../fixtures/selfplay/selfplay-v1-rust-smoke.jsonl):
   Rust-builder JSONL smoke rows for `selfplay.v1` consumers.
+- [`fixtures/api-portability/game-state-v1.json`](../fixtures/api-portability/game-state-v1.json):
+  shared game-state cases for local Python/Rust API portability reports.
 
 ## Validators And Workflows
 
@@ -127,6 +129,8 @@ Known proposed contracts that are not registered yet:
 - [`scripts/validate_opening_book_artifact.py`](../scripts/validate_opening_book_artifact.py):
   SQLite opening-book artifact metrics check against
   `opening-book-summary.v1`.
+- [`scripts/compare_api_portability_reports.py`](../scripts/compare_api_portability_reports.py):
+  dependency-light comparator for normalized local API portability reports.
 - [`.github/workflows/validate-contracts.yml`](../.github/workflows/validate-contracts.yml):
   repository-level manifest/schema/fixture validation.
 - [`.github/workflows/opening-book-release-consistency.yml`](../.github/workflows/opening-book-release-consistency.yml):

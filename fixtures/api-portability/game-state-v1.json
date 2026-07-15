@@ -1,0 +1,30 @@
+{
+  "schema": "api-portability-fixtures.v1",
+  "contract_version": "1.1.0",
+  "game_state_cases": [
+    {
+      "case_id": "empty-board",
+      "qfen": "..../..../..../....",
+      "move": {
+        "shape": 0,
+        "position": 0
+      }
+    },
+    {
+      "case_id": "single-p0-corner",
+      "qfen": "A.../..../..../....",
+      "move": {
+        "shape": 1,
+        "position": 5
+      }
+    },
+    {
+      "case_id": "mixed-asymmetric",
+      "qfen": "Ab../..c./...D/....",
+      "move": {
+        "shape": 2,
+        "position": 12
+      }
+    }
+  ]
+}

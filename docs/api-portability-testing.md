@@ -70,7 +70,7 @@ Minimum expected assertions:
 
 Each implementation should expose a small command that reads the same contract
 fixtures and emits a normalized JSON report. The contracts repository can then
-compare reports byte-for-byte or field-by-field.
+compare reports field-by-field.
 
 Recommended command shape:
 
@@ -78,6 +78,22 @@ Recommended command shape:
 quantik-portability-report \
   --contracts-root /path/to/quantik-core-contracts \
   --output build/portability-report.json
+```
+
+Current local command names:
+
+```bash
+quantik-api-portability-report \
+  --contracts-root /path/to/quantik-core-contracts \
+  --output build/python-api-portability-report.json
+
+cargo run -p quantik-core --bin quantik-portability-report -- \
+  --contracts-root /path/to/quantik-core-contracts \
+  --output build/rust-api-portability-report.json
+
+python3 /path/to/quantik-core-contracts/scripts/compare_api_portability_reports.py \
+  build/python-api-portability-report.json \
+  build/rust-api-portability-report.json
 ```
 
 Recommended report shape:
@@ -141,6 +157,12 @@ The comparator should reject:
 - mismatched parser acceptance/rejection for invalid fixtures.
 
 ## Fixture Plan
+
+The first checked-in fixture is
+[`fixtures/api-portability/game-state-v1.json`](../fixtures/api-portability/game-state-v1.json).
+It is intentionally small and covers QFEN/bitboard roundtrips, legal action
+masks, canonical QFEN, terminal detection, and one move-application case per
+position.
 
 Add fixtures in small, reviewable groups.
 
@@ -213,6 +235,26 @@ stabilize:
 - `opening-book-summary.v1`.
 
 `search-summary.v1` fixtures should wait until that contract is registered.
+
+## Local Workflow
+
+This workflow is local by design. It does not need a dedicated GitHub Action.
+Run it before merging changes that touch the portability report producers or
+game-state semantics:
+
+```bash
+python3 scripts/validate_contracts.py \
+  --manifest contracts.json \
+  --schema-glob 'schemas/**/*.json' \
+  --schema-glob 'fixtures/parquet/*.json' \
+  --schema-glob 'fixtures/api-portability/*.json' \
+  --fixture-glob 'fixtures/**/*.jsonl' \
+  --expected-release "$(cat VERSION)"
+
+python3 scripts/compare_api_portability_reports.py \
+  /path/to/python-api-portability-report.json \
+  /path/to/rust-api-portability-report.json
+```
 
 ## CI Design
 
