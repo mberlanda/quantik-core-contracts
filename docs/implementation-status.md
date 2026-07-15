@@ -58,6 +58,14 @@ Status terms:
   aggregate summary consistency. It remains structural: it checks keys,
   references, depths, terminal flags, and action identity without
   reimplementing Quantik legal-move generation.
+- Searched books built by the Rust IDDFS builder (`bench_bfs`) are now
+  readable through the benchmark opening-book API: `OpeningBookDatabase::open`
+  upgrades their `positions` table in place by adding the benchmark-book
+  columns with default values. Migrated searched rows keep `solved = 0`, so
+  they are never served as solved references; position generation with
+  `--book` reuses and writes back solved references against the same SQLite
+  file. The `quantik-models-py` E2E workflow exercises this read-through path
+  with `POSITIONS_USE_BOOK=1`.
 - `search-summary.v1` is proposed but not registered. Current Rust/Python
   audits found useful partial surfaces but no portable semantics yet for
   `expanded_nodes`, `transposition_hits`, `terminal_hits`, `tablebase_hits`,
