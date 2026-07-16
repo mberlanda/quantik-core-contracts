@@ -87,21 +87,43 @@ registered nullable rule or wait to emit the contract.
 
 ## Current Implementation State
 
-As of release `1.1.0`, `search-summary.v1` is not registered. The stack audits
-found the following useful but insufficient surfaces:
+As of release `1.1.0`, `search-summary.v1` is not registered.
 
-- Rust and Python minimax expose root value, best move, principal variation,
-  elapsed time, and node/call counts, but not portable transposition-hit or
-  terminal-hit counters.
-- Rust and Python beam search expose best/root lines and beam statistics, but
-  beam candidate deduplication and multiplicity are not root visits or
-  transposition hits under a stable contract definition.
-- Rust and Python MCTS expose best move, visit counts, and basic node counts,
-  but root move identity can collapse under transposition/canonical merging and
-  hit counters are not yet first-class diagnostics.
-- Neither stack currently has a tablebase/probe API that can produce
-  `tablebase_hits > 0`.
+The Rust telemetry surface is implemented
+([quantik-core-rust#33](https://github.com/mberlanda/quantik-core-rust/pull/33)):
 
-The next implementation step is to add explicit search telemetry surfaces in
-Rust and Python, then register this contract only after parity tests prove the
-same row can be produced and consumed across stacks.
+- A shared `SearchTelemetry` struct is produced by MCTS, beam search, and
+  minimax, with **event-based counter semantics**: each counter is defined by
+  a search event (successor set computed, successor state constructed, cached
+  result reused, duplicate merged without result reuse, state determined
+  terminal during tree search), and every engine increments it at exactly the
+  code path where that event occurs. This satisfies the `expanded_nodes`
+  shared-unit gate above.
+- `transposition_hits` (result/subtree reuse) is a separate counter from
+  `canonical_dedup_hits` (duplicate merged, nothing reused), so beam and
+  minimax dedup can never masquerade as transposition reuse. This satisfies
+  the transposition-vs-dedup gate above.
+- `terminal_hits` counts states determined terminal during tree search only;
+  rollout/simulation outcomes are excluded in every engine, giving the
+  counter one portable definition. `tablebase_hits` is always `0`.
+- Root values and per-move Q-values live in `[-1, 1]`, positive good for the
+  root player, with `|v| = 1.0` reserved for proven results; sampled and
+  heuristic estimates are clamped strictly inside the interval. Policy mass
+  is declared per engine kind (`visits` for MCTS, `multiplicity` for beam,
+  `none` for minimax), addressing the `policy_visits`/`root_q_values` gates.
+- A `root_identity_preserved` flag marks rows whose root-move statistics may
+  have collapsed under transposition/canonical merging; the draft exporter
+  skips such rows.
+- A draft JSONL exporter emits the intended row shape under the schema label
+  `search-summary.v1-draft` only. Nothing emits `search-summary.v1` until
+  this contract is registered.
+
+The normative counter and value semantics live in the Rust repository's
+`docs/search-telemetry.md` and the `search_telemetry` module documentation;
+the Python mirror must match them observably.
+
+Neither stack has a tablebase/probe API that can produce `tablebase_hits > 0`.
+
+The next implementation step is the Python telemetry mirror in
+`quantik-core-py`, then registration of this contract only after parity tests
+prove the same row can be produced and consumed across stacks.
