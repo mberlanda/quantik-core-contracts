@@ -66,10 +66,12 @@ Status terms:
   `--book` reuses and writes back solved references against the same SQLite
   file. The `quantik-models-py` E2E workflow exercises this read-through path
   with `POSITIONS_USE_BOOK=1`.
-- `search-summary.v1` is proposed but not registered. Current Rust/Python
-  audits found useful partial surfaces but no portable semantics yet for
-  `expanded_nodes`, `transposition_hits`, `terminal_hits`, `tablebase_hits`,
-  root policy visits, and root Q-value scale. See
+- `search-summary.v1` is proposed but not registered. Rust now implements an
+  event-based telemetry surface (shared counter semantics across MCTS, beam,
+  and minimax, `[-1, 1]` value scale with proven-exclusive `±1`, per-engine
+  policy-mass kind, root-identity flag) and a draft exporter that emits
+  `search-summary.v1-draft` only. The Python mirror and cross-stack parity
+  evidence are still pending. See
   [Search Summary v1](search-summary-v1.md) before adding producers.
 - `api-portability-report.v1` is implemented as a cross-stack validation
   workflow, not a registered artifact contract. Keep its fixture, report shape,
