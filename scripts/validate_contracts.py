@@ -79,9 +79,46 @@ GAME_RESULT_PARQUET_COLUMNS = [
     ("run_id", "utf8", False),
 ]
 
+SEARCH_SUMMARY_PARQUET_COLUMNS = [
+    ("schema", "utf8", True),
+    ("contract_version", "utf8", True),
+    ("run_id", "utf8", True),
+    ("row_id", "uint64", True),
+    ("position_key", "utf8", True),
+    ("ply", "uint16", True),
+    ("side_to_move", "uint8", True),
+    ("bitboards", "fixed_size_list<uint16,8>", True),
+    ("qfen", "utf8", True),
+    ("legal_action_mask", "uint64", True),
+    ("engine_kind", "utf8", True),
+    ("engine_version", "utf8", True),
+    ("engine_checkpoint", "utf8", False),
+    ("config_label", "utf8", True),
+    ("search_depth", "uint32", False),
+    ("rollouts", "uint32", False),
+    ("beam_width", "uint32", False),
+    ("node_budget", "uint64", False),
+    ("time_budget_ms", "uint32", False),
+    ("seed", "uint64", False),
+    ("root_value", "float64", True),
+    ("policy_mass_kind", "utf8", True),
+    ("policy_visits", "fixed_size_list<uint32,64>", True),
+    ("root_q_values", "fixed_size_list<float64,64>", True),
+    ("principal_variation", "list<uint8>", True),
+    ("expanded_nodes", "uint64", True),
+    ("generated_nodes", "uint64", True),
+    ("transposition_hits", "uint64", True),
+    ("canonical_dedup_hits", "uint64", True),
+    ("terminal_hits", "uint64", True),
+    ("tablebase_hits", "uint64", True),
+    ("elapsed_ms", "uint32", False),
+    ("depth_reached", "uint32", True),
+]
+
 IMPLEMENTED_PARQUET_CONTRACTS = {
     "observation.v1": OBSERVATION_PARQUET_COLUMNS,
     "game-result.v1": GAME_RESULT_PARQUET_COLUMNS,
+    "search-summary.v1": SEARCH_SUMMARY_PARQUET_COLUMNS,
 }
 
 API_PORTABILITY_FIXTURE_SCHEMA = "api-portability-fixtures.v1"
@@ -307,6 +344,21 @@ def validate_implemented_parquet_schema(
         winner = columns[9]
         if winner.get("allowed") != [0, 1]:
             fail(f"{path}: winner allowed values must be [0, 1]")
+    if contract_id == "search-summary.v1":
+        if columns[0].get("allowed") != ["search-summary.v1"]:
+            fail(f"{path}: schema allowed values must be ['search-summary.v1']")
+        if columns[6].get("allowed") != [0, 1]:
+            fail(f"{path}: side_to_move allowed values must be [0, 1]")
+        if columns[10].get("allowed") != ["mcts", "beam", "minimax"]:
+            fail(
+                f"{path}: engine_kind allowed values must be "
+                "['mcts', 'beam', 'minimax']"
+            )
+        if columns[21].get("allowed") != ["visits", "multiplicity", "none"]:
+            fail(
+                f"{path}: policy_mass_kind allowed values must be "
+                "['visits', 'multiplicity', 'none']"
+            )
 
 
 def validate_implemented_parquet_metadata_manifest(

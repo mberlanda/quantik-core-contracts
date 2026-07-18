@@ -70,6 +70,12 @@
       "major": 1,
       "schema": "schemas/model-checkpoint-v1.json",
       "docs": "docs/model-checkpoint-v1.md"
+    },
+    "search_summary": {
+      "id": "search-summary.v1",
+      "major": 1,
+      "schema": "schemas/search-summary-v1.json",
+      "docs": "docs/search-summary-v1.md"
     }
   },
   "implementation_expectations": {

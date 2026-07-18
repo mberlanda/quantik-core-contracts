@@ -1,6 +1,6 @@
 # Search Summary v1
 
-Status: **proposed, not registered**.
+Status: **registered** (release `1.1.0`) — schema `schemas/search-summary-v1.json`.
 
 `search-summary.v1` is the proposed root-search diagnostic row for completed
 engine searches. It is intentionally separate from `observation.v1`:
@@ -36,19 +36,26 @@ node_budget
 time_budget_ms
 seed
 root_value
+policy_mass_kind
 policy_visits[64]
 root_q_values[64]
 principal_variation
 expanded_nodes
+generated_nodes
 transposition_hits
+canonical_dedup_hits
 terminal_hits
 tablebase_hits
 elapsed_ms
+depth_reached
 ```
 
-The shape above is a design target, not a registered schema. Producers must not
-emit artifacts labeled `search-summary.v1` until the contract is listed in
-`contracts.json`.
+This is the registered 33-field row (`schemas/search-summary-v1.json`). Both the
+Rust and Python exporters emit exactly these fields. `policy_mass_kind`,
+`generated_nodes`, `canonical_dedup_hits`, and `depth_reached` were added to
+this list to match the implemented surface. Producers still emit the draft label
+`search-summary.v1-draft` until the label-flip follow-up PRs land in
+`quantik-core-rust` and `quantik-core-py`.
 
 ## Registration Gates
 
@@ -87,10 +94,15 @@ registered nullable rule or wait to emit the contract.
 
 ## Current Implementation State
 
-As of release `1.1.0`, `search-summary.v1` is not registered.
+As of release `1.1.0`, `search-summary.v1` is **registered** in `contracts.json`
+with schema `schemas/search-summary-v1.json`. Producers still emit the draft
+label `search-summary.v1-draft`; the stable `search-summary.v1` label is adopted
+by the label-flip follow-up PRs in `quantik-core-rust` and `quantik-core-py`.
 
 The Rust telemetry surface is implemented
-([quantik-core-rust#33](https://github.com/mberlanda/quantik-core-rust/pull/33)):
+([quantik-core-rust#33](https://github.com/mberlanda/quantik-core-rust/pull/33),
+with the minimax `expanded_nodes` no-legal-moves parity fix in
+[#35](https://github.com/mberlanda/quantik-core-rust/pull/35)):
 
 - A shared `SearchTelemetry` struct is produced by MCTS, beam search, and
   minimax, with **event-based counter semantics**: each counter is defined by
@@ -118,12 +130,15 @@ The Rust telemetry surface is implemented
   `search-summary.v1-draft` only. Nothing emits `search-summary.v1` until
   this contract is registered.
 
-The normative counter and value semantics live in the Rust repository's
-`docs/search-telemetry.md` and the `search_telemetry` module documentation;
-the Python mirror must match them observably.
+The Python mirror is implemented and merged
+([quantik-core-py#43](https://github.com/mberlanda/quantik-core-py/pull/43)):
+`quantik_core.search_summary.search_summary_row` produces the same 33-field row
+for MCTS, beam, and minimax, with the normative counter and value semantics
+documented in both repositories' `docs/search-telemetry.md`. The two exporters
+emit field-for-field identical rows.
 
 Neither stack has a tablebase/probe API that can produce `tablebase_hits > 0`.
 
-The next implementation step is the Python telemetry mirror in
-`quantik-core-py`, then registration of this contract only after parity tests
-prove the same row can be produced and consumed across stacks.
+The remaining steps are the label-flip follow-up PRs that switch the emitted
+schema label from `search-summary.v1-draft` to `search-summary.v1` and add the
+contract to each stack's `SUPPORTED_CONTRACTS`.
