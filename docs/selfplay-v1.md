@@ -11,7 +11,7 @@ The canonical fixture representation is JSONL: one JSON object per line.
 ```json
 {
   "schema": "selfplay.v1",
-  "contract_version": "1.1.0",
+  "contract_version": "1.2.0",
   "game_id": 0,
   "ply": 0,
   "qfen": "..../..../..../....",

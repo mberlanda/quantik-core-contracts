@@ -10,11 +10,11 @@ from scripts.validate_contracts import validate_json_file
 def report(language: str, cases: list[dict] | None = None) -> dict:
     return {
         "schema": "api-portability-report.v1",
-        "contracts_release": "1.1.0",
+        "contracts_release": "1.2.0",
         "implementation": {
             "language": language,
             "package": f"quantik-core-{language}",
-            "version": "1.1.0",
+            "version": "1.2.0",
         },
         "contract_ids": {
             "qfen": "qfen.v1",
@@ -39,7 +39,7 @@ class ApiPortabilityReportTests(unittest.TestCase):
     def test_api_portability_fixture_validates(self) -> None:
         validate_json_file(
             Path("fixtures/api-portability/game-state-v1.json"),
-            expected_contract_version="1.1.0",
+            expected_contract_version="1.2.0",
         )
 
     def test_api_portability_fixture_rejects_missing_cases(self) -> None:
@@ -49,13 +49,13 @@ class ApiPortabilityReportTests(unittest.TestCase):
                 json.dumps(
                     {
                         "schema": "api-portability-fixtures.v1",
-                        "contract_version": "1.1.0",
+                        "contract_version": "1.2.0",
                     }
                 ),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "game_state_cases"):
-                validate_json_file(path, expected_contract_version="1.1.0")
+                validate_json_file(path, expected_contract_version="1.2.0")
 
     def test_identical_reports_ignore_implementation_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as root:
