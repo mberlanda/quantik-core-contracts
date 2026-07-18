@@ -79,9 +79,46 @@ GAME_RESULT_PARQUET_COLUMNS = [
     ("run_id", "utf8", False),
 ]
 
+SEARCH_SUMMARY_PARQUET_COLUMNS = [
+    ("schema", "utf8", True),
+    ("contract_version", "utf8", True),
+    ("run_id", "utf8", True),
+    ("row_id", "uint64", True),
+    ("position_key", "utf8", True),
+    ("ply", "uint16", True),
+    ("side_to_move", "uint8", True),
+    ("bitboards", "fixed_size_list<uint16,8>", True),
+    ("qfen", "utf8", False),
+    ("legal_action_mask", "uint64", True),
+    ("engine_kind", "utf8", True),
+    ("engine_version", "utf8", True),
+    ("engine_checkpoint", "utf8", False),
+    ("config_label", "utf8", True),
+    ("search_depth", "uint32", False),
+    ("rollouts", "uint32", False),
+    ("beam_width", "uint32", False),
+    ("node_budget", "uint64", False),
+    ("time_budget_ms", "uint32", False),
+    ("seed", "uint64", False),
+    ("root_value", "float64", True),
+    ("policy_mass_kind", "utf8", True),
+    ("policy_visits", "fixed_size_list<uint32,64>", True),
+    ("root_q_values", "fixed_size_list<float64,64>", True),
+    ("principal_variation", "list<uint8>", True),
+    ("expanded_nodes", "uint64", True),
+    ("generated_nodes", "uint64", True),
+    ("transposition_hits", "uint64", True),
+    ("canonical_dedup_hits", "uint64", True),
+    ("terminal_hits", "uint64", True),
+    ("tablebase_hits", "uint64", True),
+    ("elapsed_ms", "uint32", False),
+    ("depth_reached", "uint32", True),
+]
+
 IMPLEMENTED_PARQUET_CONTRACTS = {
     "observation.v1": OBSERVATION_PARQUET_COLUMNS,
     "game-result.v1": GAME_RESULT_PARQUET_COLUMNS,
+    "search-summary.v1": SEARCH_SUMMARY_PARQUET_COLUMNS,
 }
 
 API_PORTABILITY_FIXTURE_SCHEMA = "api-portability-fixtures.v1"
@@ -162,6 +199,129 @@ def validate_selfplay_row(
         fail("value must be numeric")
     if float(value) not in (-1.0, 1.0):
         fail("value must be exactly -1.0 or 1.0")
+
+
+SEARCH_SUMMARY_ENGINE_KINDS = ("mcts", "beam", "minimax")
+SEARCH_SUMMARY_POLICY_MASS_KINDS = ("visits", "multiplicity", "none")
+
+
+def _expect_uint(record: dict[str, Any], key: str) -> int:
+    value = expect_int(record, key)
+    if value < 0:
+        fail(f"{key} must be non-negative")
+    return value
+
+
+def _expect_optional_uint(record: dict[str, Any], key: str) -> None:
+    value = record.get(key)
+    if value is None:
+        return
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        fail(f"{key} must be a non-negative integer or null")
+
+
+def _expect_unit_value(value: Any, label: str) -> None:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        fail(f"{label} must be numeric")
+    if not -1.0 <= float(value) <= 1.0:
+        fail(f"{label} must be in [-1, 1]")
+
+
+def validate_search_summary_row(
+    record: Any, expected_contract_version: str | None
+) -> None:
+    if not isinstance(record, dict):
+        fail("row must be a JSON object")
+    if record.get("schema") != "search-summary.v1":
+        fail("schema must be search-summary.v1")
+
+    contract_version = record.get("contract_version")
+    if not isinstance(contract_version, str):
+        fail("contract_version must be a string")
+    if (
+        expected_contract_version is not None
+        and contract_version != expected_contract_version
+    ):
+        fail(f"contract_version must be {expected_contract_version}")
+
+    for key in ("run_id", "position_key", "engine_version", "config_label"):
+        if not isinstance(record.get(key), str) or not record.get(key):
+            fail(f"{key} must be a non-empty string")
+
+    _expect_uint(record, "row_id")
+    _expect_uint(record, "ply")
+    if _expect_uint(record, "side_to_move") not in (0, 1):
+        fail("side_to_move must be 0 or 1")
+    _expect_uint(record, "legal_action_mask")
+    _expect_uint(record, "depth_reached")
+
+    bitboards = record.get("bitboards")
+    if not isinstance(bitboards, list) or len(bitboards) != 8:
+        fail("bitboards must be a list of 8 integers")
+    for plane in bitboards:
+        if not isinstance(plane, int) or isinstance(plane, bool) or not 0 <= plane <= 0xFFFF:
+            fail("bitboards entries must be uint16")
+
+    # qfen is optional; validate only when present.
+    if "qfen" in record and record.get("qfen") is not None:
+        validate_qfen(record.get("qfen"))
+
+    if record.get("engine_kind") not in SEARCH_SUMMARY_ENGINE_KINDS:
+        fail(f"engine_kind must be one of {list(SEARCH_SUMMARY_ENGINE_KINDS)}")
+    if record.get("policy_mass_kind") not in SEARCH_SUMMARY_POLICY_MASS_KINDS:
+        fail(
+            "policy_mass_kind must be one of "
+            f"{list(SEARCH_SUMMARY_POLICY_MASS_KINDS)}"
+        )
+
+    engine_checkpoint = record.get("engine_checkpoint")
+    if engine_checkpoint is not None and not isinstance(engine_checkpoint, str):
+        fail("engine_checkpoint must be a string or null")
+
+    for key in (
+        "search_depth",
+        "rollouts",
+        "beam_width",
+        "node_budget",
+        "time_budget_ms",
+        "seed",
+        "elapsed_ms",
+    ):
+        _expect_optional_uint(record, key)
+
+    _expect_unit_value(record.get("root_value"), "root_value")
+
+    policy_visits = record.get("policy_visits")
+    if not isinstance(policy_visits, list) or len(policy_visits) != 64:
+        fail("policy_visits must be a list of 64 integers")
+    for visit in policy_visits:
+        if not isinstance(visit, int) or isinstance(visit, bool) or visit < 0:
+            fail("policy_visits entries must be non-negative integers")
+
+    root_q_values = record.get("root_q_values")
+    if not isinstance(root_q_values, list) or len(root_q_values) != 64:
+        fail("root_q_values must be a list of 64 nullable floats")
+    for q in root_q_values:
+        if q is not None:
+            _expect_unit_value(q, "root_q_values entry")
+
+    pv = record.get("principal_variation")
+    if not isinstance(pv, list):
+        fail("principal_variation must be a list of action indices")
+    for action in pv:
+        if not isinstance(action, int) or isinstance(action, bool) or not 0 <= action < 64:
+            fail("principal_variation entries must be action indices in [0, 64)")
+
+    for key in (
+        "expanded_nodes",
+        "generated_nodes",
+        "transposition_hits",
+        "canonical_dedup_hits",
+        "terminal_hits",
+    ):
+        _expect_uint(record, key)
+    if _expect_uint(record, "tablebase_hits") != 0:
+        fail("tablebase_hits must be 0")
 
 
 def validate_arrow_parquet_selfplay_metadata(
@@ -307,6 +467,21 @@ def validate_implemented_parquet_schema(
         winner = columns[9]
         if winner.get("allowed") != [0, 1]:
             fail(f"{path}: winner allowed values must be [0, 1]")
+    if contract_id == "search-summary.v1":
+        if columns[0].get("allowed") != ["search-summary.v1"]:
+            fail(f"{path}: schema allowed values must be ['search-summary.v1']")
+        if columns[6].get("allowed") != [0, 1]:
+            fail(f"{path}: side_to_move allowed values must be [0, 1]")
+        if columns[10].get("allowed") != ["mcts", "beam", "minimax"]:
+            fail(
+                f"{path}: engine_kind allowed values must be "
+                "['mcts', 'beam', 'minimax']"
+            )
+        if columns[21].get("allowed") != ["visits", "multiplicity", "none"]:
+            fail(
+                f"{path}: policy_mass_kind allowed values must be "
+                "['visits', 'multiplicity', 'none']"
+            )
 
 
 def validate_implemented_parquet_metadata_manifest(
@@ -422,11 +597,15 @@ def validate_jsonl_file(
                 continue
             try:
                 record = json.loads(stripped)
-                validate_selfplay_row(
-                    record,
-                    expected_schema=expected_schema,
-                    expected_contract_version=expected_contract_version,
-                )
+                row_schema = record.get("schema") if isinstance(record, dict) else None
+                if row_schema == "search-summary.v1":
+                    validate_search_summary_row(record, expected_contract_version)
+                else:
+                    validate_selfplay_row(
+                        record,
+                        expected_schema=expected_schema,
+                        expected_contract_version=expected_contract_version,
+                    )
             except Exception as exc:
                 fail(f"{path}:{line_number}: {exc}")
             rows += 1

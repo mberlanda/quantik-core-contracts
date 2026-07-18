@@ -111,6 +111,124 @@ class ContractsValidatorTests(unittest.TestCase):
         document["columns"][6]["name"] = "policy"
         self._run_validator_with_schema(document, "column 6 name must be policy_visits")
 
+    def _load_search_summary_schema(self) -> dict:
+        schema_path = ROOT / "schemas" / "search-summary-v1.json"
+        return json.loads(schema_path.read_text(encoding="utf-8"))
+
+    def test_search_summary_rejects_extra_column(self) -> None:
+        document = self._load_search_summary_schema()
+        document["columns"].append({"name": "extra", "type": "utf8", "required": False})
+        self._run_validator_with_schema(document, "must define 33 columns")
+
+    def test_search_summary_requires_generated_nodes_column(self) -> None:
+        # generated_nodes and canonical_dedup_hits are part of the normative
+        # counter set and must be present (the earlier design doc omitted them).
+        document = self._load_search_summary_schema()
+        document["columns"][26]["name"] = "gen_nodes"
+        self._run_validator_with_schema(
+            document, "column 26 name must be generated_nodes"
+        )
+
+    def test_search_summary_requires_engine_kind_allowed(self) -> None:
+        document = self._load_search_summary_schema()
+        document["columns"][10]["allowed"] = ["mcts"]
+        self._run_validator_with_schema(
+            document, "engine_kind allowed values must be"
+        )
+
+    def test_search_summary_requires_policy_mass_kind_allowed(self) -> None:
+        document = self._load_search_summary_schema()
+        document["columns"][21]["allowed"] = ["visits"]
+        self._run_validator_with_schema(
+            document, "policy_mass_kind allowed values must be"
+        )
+
+    def _load_search_summary_row(self) -> dict:
+        fixture = ROOT / "fixtures" / "search-summary" / "search-summary-v1-smoke.jsonl"
+        with fixture.open(encoding="utf-8") as handle:
+            for line in handle:
+                if line.strip():
+                    # Return a row that carries qfen (skip the optional-qfen row).
+                    row = json.loads(line)
+                    if "qfen" in row:
+                        return row
+        raise AssertionError("no search-summary fixture row with qfen")
+
+    def _run_validator_with_row(self, row: dict, expected_error: str) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            bad = Path(temp_dir) / "search-summary-bad.jsonl"
+            bad.write_text(json.dumps(row) + "\n", encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(VALIDATOR),
+                    "--manifest",
+                    "contracts.json",
+                    "--fixture-glob",
+                    str(bad),
+                    "--expected-release",
+                    "1.1.0",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn(expected_error, result.stderr)
+
+    def test_search_summary_row_rejects_bad_side_to_move(self) -> None:
+        row = self._load_search_summary_row()
+        row["side_to_move"] = 2
+        self._run_validator_with_row(row, "side_to_move must be 0 or 1")
+
+    def test_search_summary_row_rejects_bad_engine_kind(self) -> None:
+        row = self._load_search_summary_row()
+        row["engine_kind"] = "astar"
+        self._run_validator_with_row(row, "engine_kind must be one of")
+
+    def test_search_summary_row_rejects_short_policy_visits(self) -> None:
+        row = self._load_search_summary_row()
+        row["policy_visits"] = row["policy_visits"][:63]
+        self._run_validator_with_row(
+            row, "policy_visits must be a list of 64 integers"
+        )
+
+    def test_search_summary_row_rejects_out_of_range_q_value(self) -> None:
+        row = self._load_search_summary_row()
+        row["root_q_values"][0] = 1.5
+        self._run_validator_with_row(row, "root_q_values entry must be in [-1, 1]")
+
+    def test_search_summary_row_rejects_nonzero_tablebase_hits(self) -> None:
+        row = self._load_search_summary_row()
+        row["tablebase_hits"] = 1
+        self._run_validator_with_row(row, "tablebase_hits must be 0")
+
+    def test_search_summary_row_allows_missing_qfen(self) -> None:
+        # qfen is optional: a row without it must validate cleanly.
+        row = self._load_search_summary_row()
+        row.pop("qfen", None)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            ok = Path(temp_dir) / "search-summary-ok.jsonl"
+            ok.write_text(json.dumps(row) + "\n", encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(VALIDATOR),
+                    "--manifest",
+                    "contracts.json",
+                    "--fixture-glob",
+                    str(ok),
+                    "--expected-release",
+                    "1.1.0",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_repository_contracts_validate_parquet_metadata_manifest(self) -> None:
         manifest_path = (
             ROOT

@@ -31,6 +31,7 @@ Status terms:
 | `observation.v1` | JSONL reader plus optional PyArrow Parquet reader/writer validate release `1.1.0`, metadata, physical schema, bitboards, legal mask, policy visits, and scalar fields | Benchmark exporter emits release `1.1.0`; consumer parser plus optional Arrow/Parquet reader/writer validate release, metadata, physical schema, bitboards, legal mask, policy visits, and scalar fields | Rust/Python Parquet parity is implemented for the current required physical column surface. |
 | `game-result.v1` | JSONL reader plus optional PyArrow Parquet reader/writer validate release `1.1.0`, metadata, physical schema, winner, plies, move indices, and required engine fields | Benchmark exporter emits release `1.1.0`; consumer parser plus optional Arrow/Parquet reader/writer validate release, metadata, physical schema, winner, plies, move indices, and required engine fields | Rust/Python Parquet parity is implemented for the current required physical column surface. |
 | `model-checkpoint.v1` | Manifest loader/parser validates release `1.1.0`, fields, supported inputs, weights format, and fixture; `quantik-models-py` produces checkpoints (`weights.safetensors`, training report, manifest) via `quantik-models-train`, validated through the loader | Manifest parser validates release `1.1.0`, fields, supported inputs, weights format, and fixture | Rust/Python manifest parity is implemented, and the contract now has a produced surface: the model repo's trainer exports safetensors checkpoints whose manifests round-trip through the Python loader. |
+| `search-summary.v1` | `search_summary.search_summary_row` produces the 33-field root-search diagnostic row for MCTS/beam/minimax; emits the draft label `search-summary.v1-draft` | Benchmark exporter produces the same 33-field row (`bench::contracts::search_summary_row`); emits the draft label `search-summary.v1-draft` | Registered in `contracts.json` with schema `schemas/search-summary-v1.json`. Both exporters emit field-for-field identical rows with normative event-counter semantics. Remaining: label-flip PRs (`-draft` → `search-summary.v1`) and `SUPPORTED_CONTRACTS` entries in each stack. |
 
 ## Cross-Stack Validation Workflows
 
@@ -66,13 +67,15 @@ Status terms:
   `--book` reuses and writes back solved references against the same SQLite
   file. The `quantik-models-py` E2E workflow exercises this read-through path
   with `POSITIONS_USE_BOOK=1`.
-- `search-summary.v1` is proposed but not registered. Rust now implements an
-  event-based telemetry surface (shared counter semantics across MCTS, beam,
-  and minimax, `[-1, 1]` value scale with proven-exclusive `±1`, per-engine
-  policy-mass kind, root-identity flag) and a draft exporter that emits
-  `search-summary.v1-draft` only. The Python mirror and cross-stack parity
-  evidence are still pending. See
-  [Search Summary v1](search-summary-v1.md) before adding producers.
+- `search-summary.v1` is **registered** (schema `schemas/search-summary-v1.json`).
+  Both Rust and Python implement the event-based telemetry surface (shared
+  counter semantics across MCTS, beam, and minimax, `[-1, 1]` value scale with
+  proven-exclusive `±1`, per-engine policy-mass kind, root-identity flag) and
+  emit field-for-field identical 33-field rows under the draft label
+  `search-summary.v1-draft`. Remaining gap: the label-flip follow-up PRs that
+  switch producers to the stable `search-summary.v1` label and add it to each
+  stack's `SUPPORTED_CONTRACTS`. See
+  [Search Summary v1](search-summary-v1.md).
 - `api-portability-report.v1` is implemented as a cross-stack validation
   workflow, not a registered artifact contract. Keep its fixture, report shape,
   comparator, and implementation CLI docs synchronized after every Python/Rust
