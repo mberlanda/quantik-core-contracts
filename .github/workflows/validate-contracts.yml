@@ -17,4 +17,4 @@ jobs:
             --schema-glob 'schemas/**/*.json' \
             --schema-glob 'fixtures/parquet/*.json' \
             --fixture-glob 'fixtures/**/*.jsonl' \
-            --expected-release 1.1.0
+            --expected-release 1.2.0

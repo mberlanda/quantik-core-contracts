@@ -1,6 +1,6 @@
 {
   "schema": "api-portability-fixtures.v1",
-  "contract_version": "1.1.0",
+  "contract_version": "1.2.0",
   "game_state_cases": [
     {
       "case_id": "empty-board",

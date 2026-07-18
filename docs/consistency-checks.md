@@ -40,13 +40,13 @@ this repository and running the stdlib validator directly:
 - uses: actions/checkout@v4
   with:
     repository: mberlanda/quantik-core-contracts
-    ref: v1.1.0
+    ref: v1.2.0
     path: contracts
 - working-directory: caller
   run: |
     python3 ../contracts/scripts/validate_contracts.py \
       --fixture-glob "tests/fixtures/**/*.jsonl" \
-      --expected-release 1.1.0
+      --expected-release 1.2.0
 ```
 
 This is intentionally dependency-light. It does not require `jsonschema`,
@@ -62,12 +62,12 @@ Consumer repositories can produce an artifact, validate it against
 `selfplay.v1`, and then feed it to another implementation:
 
 ```yaml
-- uses: mberlanda/quantik-core-contracts/actions/cross-language-smoke@v1.1.0
+- uses: mberlanda/quantik-core-contracts/actions/cross-language-smoke@v1.2.0
   with:
     artifact-path: "build/selfplay-smoke.jsonl"
     producer-command: "cargo run --bin quantik-selfplay -- --rows 8 --output build/selfplay-smoke.jsonl"
     consumer-command: "python -m quantik_core.ml_data build/selfplay-smoke.jsonl"
-    expected-release: "1.1.0"
+    expected-release: "1.2.0"
 ```
 
 The action performs:
@@ -89,14 +89,14 @@ Python/Rust API parity gate once both implementations expose report commands.
 ## Current Implementation Parity
 
 `docs/implementation-status.md` is the live status page for registered
-contracts. As of release `1.1.0`, the active end-to-end parity surfaces are:
+contracts. As of release `1.2.0`, the active end-to-end parity surfaces are:
 
 - `opening-book-summary.v1`: Rust and Python emit comparable summary JSON and
   the contracts package validates/compares those summaries.
 - `observation.v1`: Rust emits JSONL/debug rows and Rust/Python both validate
-  release `1.1.0`, bitboards, legal masks, policy visits, and scalar fields.
+  release `1.2.0`, bitboards, legal masks, policy visits, and scalar fields.
 - `game-result.v1`: Rust emits JSONL/debug rows and Rust/Python both validate
-  release `1.1.0`, winners, plies, action indices, and required engine fields.
+  release `1.2.0`, winners, plies, action indices, and required engine fields.
 - `model-checkpoint.v1`: Rust and Python both parse and validate manifest JSON.
 
 Large Parquet paths and full opening-book graph validators remain follow-up

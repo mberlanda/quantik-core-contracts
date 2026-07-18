@@ -27,7 +27,7 @@ class ContractsValidatorTests(unittest.TestCase):
                 "--fixture-glob",
                 "fixtures/**/*.jsonl",
                 "--expected-release",
-                "1.1.0",
+                "1.2.0",
             ],
             cwd=ROOT,
             text=True,
@@ -53,7 +53,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--schema-glob",
                     str(bad_schema),
                     "--expected-release",
-                    "1.1.0",
+                    "1.2.0",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -88,7 +88,7 @@ class ContractsValidatorTests(unittest.TestCase):
 
     def test_arrow_parquet_selfplay_requires_parquet_metadata_release_placeholder(self) -> None:
         document = self._load_arrow_parquet_schema()
-        document["parquet_metadata"]["contracts_release"] = "1.1.0"
+        document["parquet_metadata"]["contracts_release"] = "1.2.0"
         self._run_validator_with_schema(
             document,
             "parquet_metadata.contracts_release must be contracts.json.release_version",
@@ -167,7 +167,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--fixture-glob",
                     str(bad),
                     "--expected-release",
-                    "1.1.0",
+                    "1.2.0",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -220,7 +220,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--fixture-glob",
                     str(ok),
                     "--expected-release",
-                    "1.1.0",
+                    "1.2.0",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -245,8 +245,8 @@ class ContractsValidatorTests(unittest.TestCase):
         self.assertEqual(manifest["physical_schema"], "arrow-parquet-selfplay.v1")
         self.assertEqual(manifest["logical_schema"], "selfplay.v1")
         self.assertEqual(manifest["logical_contract"], "selfplay.v1")
-        self.assertEqual(manifest["contracts_release"], "1.1.0")
-        self.assertEqual(manifest["contract_version"], "1.1.0")
+        self.assertEqual(manifest["contracts_release"], "1.2.0")
+        self.assertEqual(manifest["contract_version"], "1.2.0")
 
         result = subprocess.run(
             [
@@ -257,7 +257,7 @@ class ContractsValidatorTests(unittest.TestCase):
                 "--schema-glob",
                 str(manifest_path),
                 "--expected-release",
-                "1.1.0",
+                "1.2.0",
             ],
             cwd=ROOT,
             text=True,
@@ -277,14 +277,14 @@ class ContractsValidatorTests(unittest.TestCase):
                         "physical_schema": "selfplay.v1",
                         "logical_schema": "selfplay.v1",
                         "logical_contract": "selfplay.v1",
-                        "contracts_release": "1.1.0",
-                        "contract_version": "1.1.0",
+                        "contracts_release": "1.2.0",
+                        "contract_version": "1.2.0",
                         "parquet_key_value_metadata": {
                             "physical_schema": "selfplay.v1",
                             "logical_schema": "selfplay.v1",
                             "logical_contract": "selfplay.v1",
-                            "contracts_release": "1.1.0",
-                            "contract_version": "1.1.0",
+                            "contracts_release": "1.2.0",
+                            "contract_version": "1.2.0",
                         },
                         "columns": [
                             column["name"]
@@ -304,7 +304,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--schema-glob",
                     str(metadata_path),
                     "--expected-release",
-                    "1.1.0",
+                    "1.2.0",
                 ],
                 cwd=ROOT,
                 text=True,

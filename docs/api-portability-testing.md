@@ -101,11 +101,11 @@ Recommended report shape:
 ```json
 {
   "schema": "api-portability-report.v1",
-  "contracts_release": "1.1.0",
+  "contracts_release": "1.2.0",
   "implementation": {
     "language": "python",
     "package": "quantik-core",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "contract_ids": {
     "qfen": "qfen.v1",
