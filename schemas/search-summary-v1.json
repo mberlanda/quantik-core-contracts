@@ -18,7 +18,7 @@
     { "name": "ply", "type": "uint16", "required": true },
     { "name": "side_to_move", "type": "uint8", "required": true, "allowed": [0, 1] },
     { "name": "bitboards", "type": "fixed_size_list<uint16,8>", "required": true },
-    { "name": "qfen", "type": "utf8", "required": true },
+    { "name": "qfen", "type": "utf8", "required": false },
     { "name": "legal_action_mask", "type": "uint64", "required": true },
     { "name": "engine_kind", "type": "utf8", "required": true, "allowed": ["mcts", "beam", "minimax"] },
     { "name": "engine_version", "type": "utf8", "required": true },
@@ -54,6 +54,7 @@
     "root_q_values entries are nullable: null for a root move with no value estimate (e.g. an unvisited MCTS child).",
     "root_value and every non-null root_q_values entry are in [-1, 1] from the root player's perspective; |v| == 1.0 is reserved for proven (terminal/mate) results, and every unproven estimate is clamped strictly inside (-1, 1).",
     "Event counters are defined identically across engines: expanded_nodes (a state's successor set was computed), generated_nodes (a successor state was constructed), transposition_hits (a cached search result/subtree was reused via state-keyed lookup), canonical_dedup_hits (a generated state was merged with a duplicate without reusing any search result), terminal_hits (a state was determined terminal during tree search; rollout terminals excluded), tablebase_hits (always 0 until a probe artifact exists). A no-legal-moves node is both expanded and terminal. Identical semantics do not imply comparable magnitudes across engines; use elapsed_ms for workload comparison.",
+    "qfen is optional: the position is fully recoverable from bitboards and position_key, so producers MAY omit it in bulk shards (matching observation.v1). The reference exporters currently always emit it.",
     "engine_checkpoint, search_depth, rollouts, beam_width, node_budget, time_budget_ms, seed, and elapsed_ms are nullable (engine-run configuration that may be absent).",
     "Producers currently emit the draft label search-summary.v1-draft (JSONL debug form); the stable search-summary.v1 label is blessed by this registration and adopted by follow-up label-flip PRs in quantik-core-rust and quantik-core-py."
   ]

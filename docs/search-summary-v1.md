@@ -53,9 +53,16 @@ depth_reached
 This is the registered 33-field row (`schemas/search-summary-v1.json`). Both the
 Rust and Python exporters emit exactly these fields. `policy_mass_kind`,
 `generated_nodes`, `canonical_dedup_hits`, and `depth_reached` were added to
-this list to match the implemented surface. Producers still emit the draft label
+this list to match the implemented surface. `qfen` is **optional** (the position
+is fully recoverable from `bitboards` + `position_key`; producers may omit it in
+bulk shards, matching `observation.v1`). Producers still emit the draft label
 `search-summary.v1-draft` until the label-flip follow-up PRs land in
 `quantik-core-rust` and `quantik-core-py`.
+
+Row-level validation and a checked-in smoke fixture
+(`fixtures/search-summary/*.jsonl`, one row per engine kind plus an
+optional-`qfen` row) are exercised by `scripts/validate_contracts.py` and its
+tests.
 
 ## Registration Gates
 
