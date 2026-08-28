@@ -18,7 +18,7 @@ def write_summary(path: Path, *, depth_four_edges: int = 317682) -> None:
         json.dumps(
             {
                 "schema": "opening-book-summary.v1",
-                "contract_version": "1.1.0",
+                "contract_version": "1.2.0",
                 "depth": 4,
                 "total_positions": 11739,
                 "terminal_positions": 12,
@@ -82,7 +82,7 @@ class OpeningBookSummaryValidatorTests(unittest.TestCase):
                     "--expected-depth",
                     "4",
                     "--expected-release",
-                    "1.1.0",
+                    "1.2.0",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -111,7 +111,7 @@ class OpeningBookSummaryValidatorTests(unittest.TestCase):
                     "--expected-depth",
                     "4",
                     "--expected-release",
-                    "1.1.0",
+                    "1.2.0",
                 ],
                 cwd=ROOT,
                 text=True,

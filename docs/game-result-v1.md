@@ -11,7 +11,7 @@ fixtures and debug samples.
 
 ```text
 schema: game-result.v1
-contract_version: 1.1.0
+contract_version: 1.2.0
 game_id: string
 started_at: ISO-8601 utf8 string
 p0_engine_kind: string
@@ -86,8 +86,8 @@ key-value metadata:
 physical_schema: game-result.v1
 logical_schema: game-result.v1
 logical_contract: game-result.v1
-contracts_release: 1.1.0
-contract_version: 1.1.0
+contracts_release: 1.2.0
+contract_version: 1.2.0
 ```
 
 The dependency-free manifest

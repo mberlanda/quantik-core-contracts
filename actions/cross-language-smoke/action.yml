@@ -11,7 +11,7 @@ inputs:
     description: Shell command that reads the artifact.
     required: true
   expected-release:
-    description: Expected contracts SemVer release, for example 1.1.0.
+    description: Expected contracts SemVer release, for example 1.2.0.
     required: false
     default: ""
 runs:

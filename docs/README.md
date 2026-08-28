@@ -5,7 +5,7 @@ resume work across sessions and to find the document that owns each decision.
 
 ## Current Release
 
-`VERSION` and `contracts.json` currently define release `1.1.0` with status
+`VERSION` and `contracts.json` currently define release `1.2.0` with status
 `draft`.
 
 Registered contracts:

@@ -27,7 +27,7 @@ Use `opening-book.v1` for aggregated graph knowledge.
 
 ```text
 schema: observation.v1
-contract_version: 1.1.0
+contract_version: 1.2.0
 run_id: string
 row_id: uint64
 position_key: lowercase hex string or other stable utf8 position key
@@ -126,8 +126,8 @@ key-value metadata:
 physical_schema: observation.v1
 logical_schema: observation.v1
 logical_contract: observation.v1
-contracts_release: 1.1.0
-contract_version: 1.1.0
+contracts_release: 1.2.0
+contract_version: 1.2.0
 ```
 
 The dependency-free manifest
@@ -138,7 +138,7 @@ Recommended layout:
 
 ```text
 data/observations/
-  contract_version=1.1.0/
+  contract_version=1.2.0/
   engine_kind=mcts/
   engine_checkpoint=<checkpoint-or-none>/
   date=YYYY-MM-DD/

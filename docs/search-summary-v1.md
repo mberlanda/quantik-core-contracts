@@ -1,6 +1,6 @@
 # Search Summary v1
 
-Status: **registered** (release `1.1.0`) — schema `schemas/search-summary-v1.json`.
+Status: **registered** (release `1.2.0`) — schema `schemas/search-summary-v1.json`.
 
 `search-summary.v1` is the proposed root-search diagnostic row for completed
 engine searches. It is intentionally separate from `observation.v1`:
@@ -101,7 +101,7 @@ registered nullable rule or wait to emit the contract.
 
 ## Current Implementation State
 
-As of release `1.1.0`, `search-summary.v1` is **registered** in `contracts.json`
+As of release `1.2.0`, `search-summary.v1` is **registered** in `contracts.json`
 with schema `schemas/search-summary-v1.json`. Producers still emit the draft
 label `search-summary.v1-draft`; the stable `search-summary.v1` label is adopted
 by the label-flip follow-up PRs in `quantik-core-rust` and `quantik-core-py`.

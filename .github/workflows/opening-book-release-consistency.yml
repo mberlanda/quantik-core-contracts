@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release-tag:
-        description: Optional shared release tag, for example v1.1.0. Defaults to latest contracts tag.
+        description: Optional shared release tag, for example v1.2.0. Defaults to latest contracts tag.
         required: false
         default: ""
   schedule:
