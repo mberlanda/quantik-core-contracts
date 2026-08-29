@@ -239,13 +239,39 @@ policies: uint16/uint32 or float32 [rows, 64]
 values:   int8 or float32 [rows]
 ```
 
-The tensor board channels are:
+`tensor-board.v1` pins the shape (`[rows, 9, 4, 4]`) and dtype only. It does
+not pin channel order — `contracts.json` carries `"schema": null` for this
+id, and that is deliberate: two incompatible channel orderings are both in
+use, and the id alone does not say which one a given artifact holds.
 
 ```text
-0..3 = player 0 shapes A..D
-4..7 = player 1 shapes A..D
-8    = side_to_move plane, all 0.0 or all 1.0
+mover-relative (what every trained checkpoint consumes):
+  0..3 = side-to-move's shapes A..D
+  4..7 = opponent's shapes A..D
+  8    = side_to_move plane, float(side_to_move) broadcast (0.0 or 1.0)
+  channel order swaps with ply parity
+
+colour-ordered (interop layout; nothing trains or serves on it):
+  0..3 = player 0 shapes A..D
+  4..7 = player 1 shapes A..D
+  8    = side_to_move plane, float(side_to_move) broadcast (0.0 or 1.0)
 ```
+
+The two are not interchangeable. Feeding a colour-ordered tensor to a
+mover-relative checkpoint (or the reverse) swaps the players on every
+position where player 1 is to move — half of them — and produces a model
+that plays legally and badly, with nothing in the output to indicate a
+fault. An artifact that claims `tensor-board.v1` must also declare which
+layout it uses; never assume colour order (or mover-relative order) from
+the id alone.
+
+Discriminating fixture: QFEN `"A.../..../..../...."` places one piece —
+player 0's shape A at cell (0,0) — leaving `side_to_move == 1`. A
+colour-ordered encoding puts that bit in channel 0 (player 0's shape A). A
+mover-relative encoding puts it in channel 4 (the opponent's shape A, since
+player 1 is to move). Channel 8, the side-to-move plane, is `1.0` broadcast
+in both layouts. An implementation that passes on even-ply positions but
+fails this one has the layouts crossed.
 
 Decision:
 
