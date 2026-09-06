@@ -27,7 +27,7 @@ class ContractsValidatorTests(unittest.TestCase):
                 "--fixture-glob",
                 "fixtures/**/*.jsonl",
                 "--expected-release",
-                "1.3.0",
+                "1.3.1",
             ],
             cwd=ROOT,
             text=True,
@@ -53,7 +53,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--schema-glob",
                     str(bad_schema),
                     "--expected-release",
-                    "1.3.0",
+                    "1.3.1",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -167,7 +167,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--fixture-glob",
                     str(bad),
                     "--expected-release",
-                    "1.3.0",
+                    "1.3.1",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -220,7 +220,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--fixture-glob",
                     str(ok),
                     "--expected-release",
-                    "1.3.0",
+                    "1.3.1",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -245,8 +245,8 @@ class ContractsValidatorTests(unittest.TestCase):
         self.assertEqual(manifest["physical_schema"], "arrow-parquet-selfplay.v1")
         self.assertEqual(manifest["logical_schema"], "selfplay.v1")
         self.assertEqual(manifest["logical_contract"], "selfplay.v1")
-        self.assertEqual(manifest["contracts_release"], "1.3.0")
-        self.assertEqual(manifest["contract_version"], "1.3.0")
+        self.assertEqual(manifest["contracts_release"], "1.3.1")
+        self.assertEqual(manifest["contract_version"], "1.3.1")
 
         result = subprocess.run(
             [
@@ -257,7 +257,7 @@ class ContractsValidatorTests(unittest.TestCase):
                 "--schema-glob",
                 str(manifest_path),
                 "--expected-release",
-                "1.3.0",
+                "1.3.1",
             ],
             cwd=ROOT,
             text=True,
@@ -304,7 +304,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--schema-glob",
                     str(metadata_path),
                     "--expected-release",
-                    "1.3.0",
+                    "1.3.1",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -337,7 +337,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--schema-glob",
                     str(path),
                     "--expected-release",
-                    "1.3.0",
+                    "1.3.1",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -383,7 +383,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--schema-glob",
                     str(path),
                     "--expected-release",
-                    "1.3.0",
+                    "1.3.1",
                 ],
                 cwd=ROOT,
                 text=True,

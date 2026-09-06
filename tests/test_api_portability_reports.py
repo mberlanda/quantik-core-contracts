@@ -39,7 +39,7 @@ class ApiPortabilityReportTests(unittest.TestCase):
     def test_api_portability_fixture_validates(self) -> None:
         validate_json_file(
             Path("fixtures/api-portability/game-state-v1.json"),
-            expected_contract_version="1.3.0",
+            expected_contract_version="1.3.1",
         )
 
     def test_api_portability_fixture_rejects_missing_cases(self) -> None:
@@ -49,13 +49,13 @@ class ApiPortabilityReportTests(unittest.TestCase):
                 json.dumps(
                     {
                         "schema": "api-portability-fixtures.v1",
-                        "contract_version": "1.3.0",
+                        "contract_version": "1.3.1",
                     }
                 ),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "game_state_cases"):
-                validate_json_file(path, expected_contract_version="1.3.0")
+                validate_json_file(path, expected_contract_version="1.3.1")
 
     def test_identical_reports_ignore_implementation_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as root:

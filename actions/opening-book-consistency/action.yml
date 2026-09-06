@@ -18,9 +18,15 @@ inputs:
     required: false
     default: "4"
   expected-release:
-    description: Expected contracts SemVer release.
+    description: >-
+      Expected contracts SemVer release. Leave unset for PR-time drift
+      checks against a sibling repository's main branch -- version equality
+      should only be asserted against a known-published release (e.g. a
+      post-publication job installing from PyPI/crates.io), never against a
+      sibling's main mid-transition. No default: a version pinned here would
+      go stale every release regardless of caller intent.
     required: false
-    default: "1.2.0"
+    default: ""
 runs:
   using: composite
   steps:
@@ -35,8 +41,12 @@ runs:
       run: |
         test -s "${{ inputs['rust-summary'] }}"
         test -s "${{ inputs['python-summary'] }}"
+        release_args=()
+        if [ -n "${{ inputs['expected-release'] }}" ]; then
+          release_args+=(--expected-release "${{ inputs['expected-release'] }}")
+        fi
         python "${{ github.action_path }}/../../scripts/validate_opening_book_summary.py" \
           --rust-summary "${{ inputs['rust-summary'] }}" \
           --python-summary "${{ inputs['python-summary'] }}" \
           --expected-depth "${{ inputs['expected-depth'] }}" \
-          --expected-release "${{ inputs['expected-release'] }}"
+          "${release_args[@]}"
