@@ -446,12 +446,10 @@ def validate_sqlite_book(
 
 
 def compare_book_to_summary(book: dict[str, Any], summary: dict[str, Any]) -> None:
-    comparable = {
-        key: value
-        for key, value in summary.items()
-        if key != "contract_version"
-    }
-    if book != comparable:
+    # `summary` no longer carries contract_version (normalize_summary returns
+    # it separately now), so no filtering is needed here any more -- `book`
+    # never had that key either.
+    if book != summary:
         fail("SQLite artifact metrics do not match opening-book-summary.v1")
 
 
@@ -468,10 +466,10 @@ def main() -> int:
         book_summary = validate_sqlite_book(
             Path(args.db), args.expected_depth, args.expected_release
         )
-        rust_summary = normalize_summary(
+        rust_summary, _rust_version = normalize_summary(
             Path(args.rust_summary), args.expected_depth, args.expected_release
         )
-        python_summary = normalize_summary(
+        python_summary, _python_version = normalize_summary(
             Path(args.python_summary), args.expected_depth, args.expected_release
         )
         if rust_summary != python_summary:

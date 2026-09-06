@@ -122,6 +122,75 @@ class OpeningBookSummaryValidatorTests(unittest.TestCase):
             self.assertEqual(result.returncode, 1)
             self.assertIn("summaries differ", result.stderr)
 
+    def test_differing_contract_versions_pass_without_expected_release(self) -> None:
+        """The actual fix for the release deadlock this repo hit once
+        already: this drift check compares graph shape, not version
+        numbers, and must not fail just because one stack's version-bump
+        PR merged before the other's. Omitting --expected-release is what a
+        PR-time consumer checking a sibling repository's main branch must
+        do; asserting a specific release is for a post-publication check
+        against known-published artifacts instead."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tmp_path = Path(temp_dir)
+            rust_summary = tmp_path / "rust.json"
+            python_summary = tmp_path / "python.json"
+            write_summary(rust_summary)
+            write_summary(python_summary)
+            python_data = json.loads(python_summary.read_text(encoding="utf-8"))
+            python_data["contract_version"] = "1.3.0"
+            python_summary.write_text(json.dumps(python_data), encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(VALIDATOR),
+                    "--rust-summary",
+                    str(rust_summary),
+                    "--python-summary",
+                    str(python_summary),
+                    "--expected-depth",
+                    "4",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_expected_release_still_enforced_when_explicitly_passed(self) -> None:
+        """A caller that does opt in (e.g. the post-publication job comparing
+        against a known release) must still catch a real mismatch."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            tmp_path = Path(temp_dir)
+            rust_summary = tmp_path / "rust.json"
+            python_summary = tmp_path / "python.json"
+            write_summary(rust_summary)
+            write_summary(python_summary)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(VALIDATOR),
+                    "--rust-summary",
+                    str(rust_summary),
+                    "--python-summary",
+                    str(python_summary),
+                    "--expected-depth",
+                    "4",
+                    "--expected-release",
+                    "1.3.0",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("contract_version 1.2.0 does not match 1.3.0", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

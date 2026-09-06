@@ -29,7 +29,7 @@ ID such as `selfplay.v2`.
 
 The current baseline is:
 
-- contracts release `1.3.0`
+- contracts release `1.3.1`
 - `qfen.v1`
 - `bitboard.v1`
 - `action-index.v1`

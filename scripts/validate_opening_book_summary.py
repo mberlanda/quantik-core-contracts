@@ -51,13 +51,29 @@ def expect_int(summary: dict[str, Any], key: str, path: Path) -> int:
 
 def normalize_summary(
     path: Path, expected_depth: int, expected_release: str | None
-) -> dict[str, Any]:
+) -> tuple[dict[str, Any], str]:
+    """Returns (structural_summary, contract_version).
+
+    `contract_version` is deliberately kept out of `structural_summary`: this
+    function's structural payload is compared for exact equality between the
+    Rust and Python summaries, and that equality check is drift detection
+    (do both engines enumerate the same graph?), not version synchronization.
+    Bundling contract_version into it made this drift check fail whenever one
+    stack's release bump PR merges before the other's -- the exact circular
+    "PR checks a sibling's main, which the PR itself is meant to update"
+    deadlock this repo hit once already (see the write-up linked from
+    quantik-workspace's QW-001 decisions.md). Version equality is checked
+    only when `expected_release` is explicitly passed, which callers should
+    do only when comparing against a known-published release (e.g. a
+    post-publication job installing from PyPI/crates.io), never against a
+    sibling repository's `main` branch mid-transition.
+    """
     summary = load_summary(path)
     if summary.get("schema") != "opening-book-summary.v1":
         fail(f"{path}: schema must be opening-book-summary.v1")
     contract_version = summary.get("contract_version")
-    if not isinstance(contract_version, str):
-        fail(f"{path}: contract_version must be a string")
+    if not isinstance(contract_version, str) or not contract_version:
+        fail(f"{path}: contract_version must be a non-empty string")
     if expected_release is not None and contract_version != expected_release:
         fail(
             f"{path}: contract_version {contract_version} does not match "
@@ -115,13 +131,12 @@ def normalize_summary(
 
     return {
         "schema": "opening-book-summary.v1",
-        "contract_version": contract_version,
         "depth": depth,
         "total_positions": total_positions,
         "terminal_positions": terminal_positions,
         "total_edges": total_edges,
         "per_depth": normalized_rows,
-    }
+    }, contract_version
 
 
 def main() -> int:
@@ -133,10 +148,10 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        rust_summary = normalize_summary(
+        rust_summary, rust_version = normalize_summary(
             Path(args.rust_summary), args.expected_depth, args.expected_release
         )
-        python_summary = normalize_summary(
+        python_summary, python_version = normalize_summary(
             Path(args.python_summary), args.expected_depth, args.expected_release
         )
         if rust_summary != python_summary:
@@ -145,7 +160,9 @@ def main() -> int:
             "opening-book-summary.v1 consistency passed: "
             f"depth={rust_summary['depth']} "
             f"positions={rust_summary['total_positions']} "
-            f"edges={rust_summary['total_edges']}"
+            f"edges={rust_summary['total_edges']} "
+            f"rust_contract_version={rust_version} "
+            f"python_contract_version={python_version}"
         )
         return 0
     except Exception as exc:
