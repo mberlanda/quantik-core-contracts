@@ -42,6 +42,9 @@ jobs:
             --manifest contracts.json \
             --schema-glob 'schemas/**/*.json' \
             --schema-glob 'fixtures/parquet/*.json' \
+            --schema-glob 'fixtures/api-portability/*.json' \
+            --schema-glob 'fixtures/symmetry/*.json' \
+            --schema-glob 'fixtures/invalid-states/*.json' \
             --fixture-glob 'fixtures/**/*.jsonl' \
             --expected-release "${{ steps.release.outputs.version }}"
 

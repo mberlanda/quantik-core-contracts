@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import itertools
 import json
 import re
 import sys
@@ -17,6 +18,31 @@ from typing import Any
 
 QFEN_RE = re.compile(r"^[A-Da-d.]{4}/[A-Da-d.]{4}/[A-Da-d.]{4}/[A-Da-d.]{4}$")
 SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$")
+
+# The symmetry-fixtures.v1 transform_index space is d4_index * 24 + shape_perm_index,
+# where shape_perm_index enumerates the 24 permutations of (0, 1, 2, 3) in the same
+# lexicographic order Python's itertools.permutations and both engine implementations'
+# generators produce (see docs/symmetry-transposition.md). Reimplemented here, rather
+# than imported, to keep this validator dependency-free and language-neutral.
+SHAPE_PERM_ORDER: list[tuple[int, ...]] = list(itertools.permutations(range(4)))
+
+
+def _build_d4_position_maps() -> list[list[int]]:
+    maps: list[list[int]] = [[0] * 16 for _ in range(8)]
+    for i in range(16):
+        r, c = divmod(i, 4)
+        maps[0][i] = r * 4 + c  # id
+        maps[1][i] = c * 4 + (3 - r)  # rot90
+        maps[2][i] = (3 - r) * 4 + (3 - c)  # rot180
+        maps[3][i] = (3 - c) * 4 + r  # rot270
+        maps[4][i] = r * 4 + (3 - c)  # reflV
+        maps[5][i] = (3 - r) * 4 + c  # reflH
+        maps[6][i] = c * 4 + r  # reflD
+        maps[7][i] = (3 - c) * 4 + (3 - r)  # reflAD
+    return maps
+
+
+D4_POSITION_MAPS = _build_d4_position_maps()
 
 ARROW_PARQUET_SELFPLAY_COLUMNS = [
     ("logical_schema", "utf8", True),
@@ -122,6 +148,17 @@ IMPLEMENTED_PARQUET_CONTRACTS = {
 }
 
 API_PORTABILITY_FIXTURE_SCHEMA = "api-portability-fixtures.v1"
+SYMMETRY_FIXTURE_SCHEMA = "symmetry-fixtures.v1"
+INVALID_STATE_FIXTURE_SCHEMA = "invalid-state-fixtures.v1"
+
+INVALID_STATE_BOUNDARIES = ("parser", "constructor")
+INVALID_STATE_REJECTIONS = (
+    "MALFORMED_QFEN",
+    "TURN_BALANCE_INVALID",
+    "SHAPE_COUNT_EXCEEDED",
+    "ILLEGAL_PLACEMENT",
+    "PIECE_OVERLAP",
+)
 
 PARQUET_RELEASE_METADATA_KEYS = ["contracts_release", "contract_version"]
 PARQUET_SCHEMA_RELEASE_VALUE = "contracts.json.release_version"
@@ -557,6 +594,141 @@ def validate_api_portability_fixture(
             fail(f"{path}: game_state_cases[{case_id}].move.position must be in 0..15")
 
 
+def _validate_transform_index(value: Any, label: str) -> None:
+    if not isinstance(value, int) or isinstance(value, bool) or not 0 <= value <= 191:
+        fail(f"{label} must be an integer in 0..191")
+
+
+def _validate_shape_perm(value: Any, label: str) -> None:
+    if not isinstance(value, list) or len(value) != 4:
+        fail(f"{label} must be a 4-element list")
+    if sorted(value) != [0, 1, 2, 3]:
+        fail(f"{label} must be a permutation of [0, 1, 2, 3]")
+
+
+def validate_symmetry_fixture(document: dict[str, Any], path: Path) -> None:
+    board_cases = document.get("board_cases")
+    if not isinstance(board_cases, list) or not board_cases:
+        fail(f"{path}: board_cases must be a non-empty list")
+    seen_board_ids: set[str] = set()
+    for case in board_cases:
+        if not isinstance(case, dict):
+            fail(f"{path}: board_cases entries must be objects")
+        case_id = case.get("case_id")
+        if not isinstance(case_id, str) or not case_id:
+            fail(f"{path}: board_cases case_id must be a non-empty string")
+        if case_id in seen_board_ids:
+            fail(f"{path}: duplicate symmetry board case_id {case_id}")
+        seen_board_ids.add(case_id)
+        validate_qfen(case.get("qfen"))
+        validate_qfen(case.get("canonical_qfen"))
+        canonical_key = case.get("canonical_key")
+        if not isinstance(canonical_key, str) or not re.match(r"^[0-9a-f]{36}$", canonical_key):
+            fail(f"{path}: {case_id}.canonical_key must be 36 lowercase hex chars")
+        orbit_size = case.get("orbit_size")
+        if not isinstance(orbit_size, int) or isinstance(orbit_size, bool) or not 1 <= orbit_size <= 192:
+            fail(f"{path}: {case_id}.orbit_size must be an integer in 1..192")
+        transforms = case.get("transforms")
+        if not isinstance(transforms, list) or not transforms:
+            fail(f"{path}: {case_id}.transforms must be a non-empty list")
+        seen_transform_indices: set[int] = set()
+        for transform in transforms:
+            if not isinstance(transform, dict):
+                fail(f"{path}: {case_id} transform entries must be objects")
+            t_index = transform.get("transform_index")
+            _validate_transform_index(t_index, f"{case_id}.transforms[].transform_index")
+            if t_index in seen_transform_indices:
+                fail(f"{path}: {case_id} duplicate transform_index {t_index}")
+            seen_transform_indices.add(t_index)
+            d4_index = transform.get("d4_index")
+            if not isinstance(d4_index, int) or isinstance(d4_index, bool) or not 0 <= d4_index <= 7:
+                fail(f"{path}: {case_id}.transforms[].d4_index must be in 0..7")
+            shape_perm = transform.get("shape_perm")
+            _validate_shape_perm(shape_perm, f"{case_id}.transforms[].shape_perm")
+            if t_index != d4_index * 24 + SHAPE_PERM_ORDER.index(tuple(shape_perm)):
+                fail(
+                    f"{path}: {case_id} transform_index {t_index} does not match "
+                    f"d4_index {d4_index} and shape_perm {shape_perm}"
+                )
+            validate_qfen(transform.get("qfen"))
+
+    action_cases = document.get("action_remap_cases")
+    if not isinstance(action_cases, list) or not action_cases:
+        fail(f"{path}: action_remap_cases must be a non-empty list")
+    seen_action_ids: set[str] = set()
+    for case in action_cases:
+        if not isinstance(case, dict):
+            fail(f"{path}: action_remap_cases entries must be objects")
+        case_id = case.get("case_id")
+        if not isinstance(case_id, str) or not case_id:
+            fail(f"{path}: action_remap_cases case_id must be a non-empty string")
+        if case_id in seen_action_ids:
+            fail(f"{path}: duplicate action_remap case_id {case_id}")
+        seen_action_ids.add(case_id)
+        action_index = case.get("action_index")
+        if not isinstance(action_index, int) or isinstance(action_index, bool) or not 0 <= action_index <= 63:
+            fail(f"{path}: {case_id}.action_index must be in 0..63")
+        t_index = case.get("transform_index")
+        _validate_transform_index(t_index, f"{case_id}.transform_index")
+        expected = case.get("expected_action_index")
+        if not isinstance(expected, int) or isinstance(expected, bool) or not 0 <= expected <= 63:
+            fail(f"{path}: {case_id}.expected_action_index must be in 0..63")
+        t_inv = case.get("inverse_transform_index")
+        _validate_transform_index(t_inv, f"{case_id}.inverse_transform_index")
+
+        # Reference re-derivation: recompute the remap independently from the
+        # transform's own (d4_index, shape_perm) pair and require it to match
+        # expected_action_index, so a hand-edited fixture can't silently drift.
+        shape, position = divmod(action_index, 16)
+        d4_index = case.get("d4_index")
+        shape_perm = case.get("shape_perm")
+        _validate_shape_perm(shape_perm, f"{case_id}.shape_perm")
+        new_position = D4_POSITION_MAPS[d4_index][position]
+        new_shape = shape_perm.index(shape)
+        recomputed = new_shape * 16 + new_position
+        if recomputed != expected:
+            fail(
+                f"{path}: {case_id} expected_action_index {expected} does not match "
+                f"recomputed {recomputed} from d4_index/shape_perm"
+            )
+
+
+def validate_invalid_state_fixture(document: dict[str, Any], path: Path) -> None:
+    cases = document.get("cases")
+    if not isinstance(cases, list) or not cases:
+        fail(f"{path}: cases must be a non-empty list")
+    seen: set[str] = set()
+    for case in cases:
+        if not isinstance(case, dict):
+            fail(f"{path}: invalid-state cases must be objects")
+        case_id = case.get("case_id")
+        if not isinstance(case_id, str) or not case_id:
+            fail(f"{path}: invalid-state case_id must be a non-empty string")
+        if case_id in seen:
+            fail(f"{path}: duplicate invalid-state case_id {case_id}")
+        seen.add(case_id)
+        if case.get("boundary") not in INVALID_STATE_BOUNDARIES:
+            fail(f"{path}: {case_id}.boundary must be one of {INVALID_STATE_BOUNDARIES}")
+        if case.get("expected_rejection") not in INVALID_STATE_REJECTIONS:
+            fail(
+                f"{path}: {case_id}.expected_rejection must be one of "
+                f"{INVALID_STATE_REJECTIONS}"
+            )
+        has_qfen = "qfen" in case
+        has_bitboards = "bitboards" in case
+        if has_qfen == has_bitboards:
+            fail(f"{path}: {case_id} must set exactly one of qfen or bitboards")
+        if has_bitboards:
+            bitboards = case["bitboards"]
+            if not isinstance(bitboards, list) or len(bitboards) != 8:
+                fail(f"{path}: {case_id}.bitboards must be a list of 8 integers")
+            for plane in bitboards:
+                if not isinstance(plane, int) or isinstance(plane, bool) or not 0 <= plane <= 0xFFFF:
+                    fail(f"{path}: {case_id}.bitboards entries must be uint16")
+        if not isinstance(case.get("note"), str) or not case.get("note"):
+            fail(f"{path}: {case_id}.note must be a non-empty string")
+
+
 def validate_json_file(path: Path, expected_contract_version: str | None) -> None:
     with path.open(encoding="utf-8") as handle:
         document = json.load(handle)
@@ -576,6 +748,10 @@ def validate_json_file(path: Path, expected_contract_version: str | None) -> Non
         validate_implemented_parquet_schema(document, path, document["schema"])
     if isinstance(document, dict) and document.get("schema") == API_PORTABILITY_FIXTURE_SCHEMA:
         validate_api_portability_fixture(document, path, expected_contract_version)
+    if isinstance(document, dict) and document.get("schema") == SYMMETRY_FIXTURE_SCHEMA:
+        validate_symmetry_fixture(document, path)
+    if isinstance(document, dict) and document.get("schema") == INVALID_STATE_FIXTURE_SCHEMA:
+        validate_invalid_state_fixture(document, path)
     if isinstance(document, dict):
         schema = document.get("schema")
         if isinstance(schema, str) and schema.endswith(".metadata"):

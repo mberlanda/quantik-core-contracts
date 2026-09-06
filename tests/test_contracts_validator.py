@@ -315,6 +315,97 @@ class ContractsValidatorTests(unittest.TestCase):
             self.assertEqual(result.returncode, 1)
             self.assertIn("physical_schema must be arrow-parquet-selfplay.v1", result.stderr)
 
+    def _load_symmetry_fixture(self) -> dict:
+        fixture_path = ROOT / "fixtures" / "symmetry" / "symmetry-v1.json"
+        return json.loads(fixture_path.read_text(encoding="utf-8"))
+
+    def _load_invalid_state_fixture(self) -> dict:
+        fixture_path = ROOT / "fixtures" / "invalid-states" / "invalid-state-v1.json"
+        return json.loads(fixture_path.read_text(encoding="utf-8"))
+
+    def test_symmetry_fixture_validates(self) -> None:
+        document = self._load_symmetry_fixture()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "symmetry-v1.json"
+            path.write_text(json.dumps(document), encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(VALIDATOR),
+                    "--manifest",
+                    "contracts.json",
+                    "--schema-glob",
+                    str(path),
+                    "--expected-release",
+                    "1.2.0",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_symmetry_fixture_rejects_transform_index_mismatch(self) -> None:
+        document = self._load_symmetry_fixture()
+        document["board_cases"][0]["transforms"][1]["transform_index"] = 999 % 24
+        self._run_validator_with_schema(
+            document, "does not match d4_index"
+        )
+
+    def test_symmetry_fixture_rejects_wrong_expected_action_index(self) -> None:
+        document = self._load_symmetry_fixture()
+        document["action_remap_cases"][0]["expected_action_index"] = (
+            document["action_remap_cases"][0]["expected_action_index"] + 1
+        ) % 64
+        self._run_validator_with_schema(
+            document, "does not match recomputed"
+        )
+
+    def test_symmetry_fixture_rejects_bad_canonical_key(self) -> None:
+        document = self._load_symmetry_fixture()
+        document["board_cases"][0]["canonical_key"] = "not-hex"
+        self._run_validator_with_schema(
+            document, "canonical_key must be 36 lowercase hex chars"
+        )
+
+    def test_invalid_state_fixture_validates(self) -> None:
+        document = self._load_invalid_state_fixture()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "invalid-state-v1.json"
+            path.write_text(json.dumps(document), encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(VALIDATOR),
+                    "--manifest",
+                    "contracts.json",
+                    "--schema-glob",
+                    str(path),
+                    "--expected-release",
+                    "1.2.0",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_invalid_state_fixture_rejects_unknown_rejection_reason(self) -> None:
+        document = self._load_invalid_state_fixture()
+        document["cases"][0]["expected_rejection"] = "SOMETHING_ELSE"
+        self._run_validator_with_schema(
+            document, "expected_rejection must be one of"
+        )
+
+    def test_invalid_state_fixture_rejects_both_qfen_and_bitboards(self) -> None:
+        document = self._load_invalid_state_fixture()
+        document["cases"][0]["bitboards"] = [0] * 8
+        self._run_validator_with_schema(
+            document, "must set exactly one of qfen or bitboards"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

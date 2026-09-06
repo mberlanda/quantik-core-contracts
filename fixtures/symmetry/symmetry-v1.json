@@ -1,0 +1,559 @@
+{
+  "schema": "symmetry-fixtures.v1",
+  "contract_version": "1.2.0",
+  "board_cases": [
+    {
+      "case_id": "empty-board",
+      "qfen": "..../..../..../....",
+      "side_to_move": 0,
+      "canonical_qfen": "..../..../..../....",
+      "canonical_key": "010200000000000000000000000000000000",
+      "orbit_size": 1,
+      "transforms": [
+        {
+          "transform_index": 0,
+          "d4_index": 0,
+          "d4_name": "id",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../...."
+        },
+        {
+          "transform_index": 24,
+          "d4_index": 1,
+          "d4_name": "rot90",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../...."
+        },
+        {
+          "transform_index": 48,
+          "d4_index": 2,
+          "d4_name": "rot180",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../...."
+        },
+        {
+          "transform_index": 72,
+          "d4_index": 3,
+          "d4_name": "rot270",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../...."
+        },
+        {
+          "transform_index": 96,
+          "d4_index": 4,
+          "d4_name": "reflV",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../...."
+        },
+        {
+          "transform_index": 120,
+          "d4_index": 5,
+          "d4_name": "reflH",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../...."
+        },
+        {
+          "transform_index": 144,
+          "d4_index": 6,
+          "d4_name": "reflD",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../...."
+        },
+        {
+          "transform_index": 168,
+          "d4_index": 7,
+          "d4_name": "reflAD",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../...."
+        }
+      ]
+    },
+    {
+      "case_id": "single-corner-shape-a",
+      "qfen": "A.../..../..../....",
+      "side_to_move": 1,
+      "canonical_qfen": "..../..../..../D...",
+      "canonical_key": "010200000000000000100000000000000000",
+      "orbit_size": 16,
+      "transforms": [
+        {
+          "transform_index": 0,
+          "d4_index": 0,
+          "d4_name": "id",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "A.../..../..../...."
+        },
+        {
+          "transform_index": 24,
+          "d4_index": 1,
+          "d4_name": "rot90",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "...A/..../..../...."
+        },
+        {
+          "transform_index": 48,
+          "d4_index": 2,
+          "d4_name": "rot180",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../...A"
+        },
+        {
+          "transform_index": 72,
+          "d4_index": 3,
+          "d4_name": "rot270",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../A..."
+        },
+        {
+          "transform_index": 96,
+          "d4_index": 4,
+          "d4_name": "reflV",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "...A/..../..../...."
+        },
+        {
+          "transform_index": 120,
+          "d4_index": 5,
+          "d4_name": "reflH",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../A..."
+        },
+        {
+          "transform_index": 144,
+          "d4_index": 6,
+          "d4_name": "reflD",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "A.../..../..../...."
+        },
+        {
+          "transform_index": 168,
+          "d4_index": 7,
+          "d4_name": "reflAD",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../..../..../...A"
+        }
+      ]
+    },
+    {
+      "case_id": "mixed-asymmetric",
+      "qfen": "Ab../..c./...D/....",
+      "side_to_move": 0,
+      "canonical_qfen": "..aD/.b../C.../....",
+      "canonical_key": "010200000000000108000400200000000000",
+      "orbit_size": 192,
+      "transforms": [
+        {
+          "transform_index": 0,
+          "d4_index": 0,
+          "d4_name": "id",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "Ab../..c./...D/...."
+        },
+        {
+          "transform_index": 24,
+          "d4_index": 1,
+          "d4_name": "rot90",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "...A/...b/..c./.D.."
+        },
+        {
+          "transform_index": 48,
+          "d4_index": 2,
+          "d4_name": "rot180",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../D.../.c../..bA"
+        },
+        {
+          "transform_index": 72,
+          "d4_index": 3,
+          "d4_name": "rot270",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..D./.c../b.../A..."
+        },
+        {
+          "transform_index": 96,
+          "d4_index": 4,
+          "d4_name": "reflV",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..bA/.c../D.../...."
+        },
+        {
+          "transform_index": 120,
+          "d4_index": 5,
+          "d4_name": "reflH",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "..../...D/..c./Ab.."
+        },
+        {
+          "transform_index": 144,
+          "d4_index": 6,
+          "d4_name": "reflD",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": "A.../b.../.c../..D."
+        },
+        {
+          "transform_index": 168,
+          "d4_index": 7,
+          "d4_name": "reflAD",
+          "shape_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "qfen": ".D../..c./...b/...A"
+        },
+        {
+          "transform_index": 1,
+          "d4_index": 0,
+          "d4_name": "id",
+          "shape_perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "qfen": "Ab../..d./...C/...."
+        },
+        {
+          "transform_index": 25,
+          "d4_index": 1,
+          "d4_name": "rot90",
+          "shape_perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "qfen": "...A/...b/..d./.C.."
+        }
+      ]
+    }
+  ],
+  "action_remap_cases": [
+    {
+      "case_id": "pure-d4-id",
+      "action_index": 37,
+      "shape": 2,
+      "position": 5,
+      "transform_index": 0,
+      "d4_index": 0,
+      "d4_name": "id",
+      "shape_perm": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_action_index": 37,
+      "expected_shape": 2,
+      "expected_position": 5,
+      "inverse_transform_index": 0
+    },
+    {
+      "case_id": "pure-d4-rot90",
+      "action_index": 37,
+      "shape": 2,
+      "position": 5,
+      "transform_index": 24,
+      "d4_index": 1,
+      "d4_name": "rot90",
+      "shape_perm": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_action_index": 38,
+      "expected_shape": 2,
+      "expected_position": 6,
+      "inverse_transform_index": 72
+    },
+    {
+      "case_id": "pure-d4-rot180",
+      "action_index": 37,
+      "shape": 2,
+      "position": 5,
+      "transform_index": 48,
+      "d4_index": 2,
+      "d4_name": "rot180",
+      "shape_perm": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_action_index": 42,
+      "expected_shape": 2,
+      "expected_position": 10,
+      "inverse_transform_index": 48
+    },
+    {
+      "case_id": "pure-d4-rot270",
+      "action_index": 37,
+      "shape": 2,
+      "position": 5,
+      "transform_index": 72,
+      "d4_index": 3,
+      "d4_name": "rot270",
+      "shape_perm": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_action_index": 41,
+      "expected_shape": 2,
+      "expected_position": 9,
+      "inverse_transform_index": 24
+    },
+    {
+      "case_id": "pure-d4-reflV",
+      "action_index": 37,
+      "shape": 2,
+      "position": 5,
+      "transform_index": 96,
+      "d4_index": 4,
+      "d4_name": "reflV",
+      "shape_perm": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_action_index": 38,
+      "expected_shape": 2,
+      "expected_position": 6,
+      "inverse_transform_index": 96
+    },
+    {
+      "case_id": "pure-d4-reflH",
+      "action_index": 37,
+      "shape": 2,
+      "position": 5,
+      "transform_index": 120,
+      "d4_index": 5,
+      "d4_name": "reflH",
+      "shape_perm": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_action_index": 41,
+      "expected_shape": 2,
+      "expected_position": 9,
+      "inverse_transform_index": 120
+    },
+    {
+      "case_id": "pure-d4-reflD",
+      "action_index": 37,
+      "shape": 2,
+      "position": 5,
+      "transform_index": 144,
+      "d4_index": 6,
+      "d4_name": "reflD",
+      "shape_perm": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_action_index": 37,
+      "expected_shape": 2,
+      "expected_position": 5,
+      "inverse_transform_index": 144
+    },
+    {
+      "case_id": "pure-d4-reflAD",
+      "action_index": 37,
+      "shape": 2,
+      "position": 5,
+      "transform_index": 168,
+      "d4_index": 7,
+      "d4_name": "reflAD",
+      "shape_perm": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_action_index": 42,
+      "expected_shape": 2,
+      "expected_position": 10,
+      "inverse_transform_index": 168
+    },
+    {
+      "case_id": "pure-shape-relabel",
+      "action_index": 37,
+      "shape": 2,
+      "position": 5,
+      "transform_index": 1,
+      "d4_index": 0,
+      "d4_name": "id",
+      "shape_perm": [
+        0,
+        1,
+        3,
+        2
+      ],
+      "expected_action_index": 53,
+      "expected_shape": 3,
+      "expected_position": 5,
+      "inverse_transform_index": 1
+    },
+    {
+      "case_id": "combined-rot90-shape-relabel",
+      "action_index": 37,
+      "shape": 2,
+      "position": 5,
+      "transform_index": 25,
+      "d4_index": 1,
+      "d4_name": "rot90",
+      "shape_perm": [
+        0,
+        1,
+        3,
+        2
+      ],
+      "expected_action_index": 54,
+      "expected_shape": 3,
+      "expected_position": 6,
+      "inverse_transform_index": 73
+    },
+    {
+      "case_id": "identity-transform",
+      "action_index": 37,
+      "shape": 2,
+      "position": 5,
+      "transform_index": 0,
+      "d4_index": 0,
+      "d4_name": "id",
+      "shape_perm": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_action_index": 37,
+      "expected_shape": 2,
+      "expected_position": 5,
+      "inverse_transform_index": 0
+    }
+  ]
+}
