@@ -1,0 +1,64 @@
+{
+  "schema": "invalid-state-fixtures.v1",
+  "contract_version": "1.2.0",
+  "cases": [
+    {
+      "case_id": "malformed-width-short-rank",
+      "boundary": "parser",
+      "qfen": "A../..../..../....",
+      "expected_rejection": "MALFORMED_QFEN",
+      "note": "Rank 0 has 3 characters instead of 4."
+    },
+    {
+      "case_id": "malformed-width-missing-rank",
+      "boundary": "parser",
+      "qfen": "..../..../....",
+      "expected_rejection": "MALFORMED_QFEN",
+      "note": "Only 3 ranks instead of 4."
+    },
+    {
+      "case_id": "malformed-char",
+      "boundary": "parser",
+      "qfen": "X.../..../..../....",
+      "expected_rejection": "MALFORMED_QFEN",
+      "note": "'X' is not a valid empty/A-D/a-d QFEN character."
+    },
+    {
+      "case_id": "turn-balance-invalid",
+      "boundary": "constructor",
+      "expected_rejection": "TURN_BALANCE_INVALID",
+      "note": "Two player-0 pieces placed with zero player-1 pieces: difference of 2.",
+      "qfen": "AB../..../..../...."
+    },
+    {
+      "case_id": "shape-count-exceeded",
+      "boundary": "constructor",
+      "expected_rejection": "SHAPE_COUNT_EXCEEDED",
+      "note": "Player 0 has three shape-A pieces; inventory allows at most 2.",
+      "qfen": "A.../A.../A.../...."
+    },
+    {
+      "case_id": "illegal-placement-cross-player-same-shape-line",
+      "boundary": "constructor",
+      "expected_rejection": "ILLEGAL_PLACEMENT",
+      "note": "Player 0 and player 1 both place shape A in row 0.",
+      "qfen": "Aa../..../..../...."
+    },
+    {
+      "case_id": "piece-overlap",
+      "boundary": "constructor",
+      "expected_rejection": "PIECE_OVERLAP",
+      "note": "Player 0 shape A and shape B both occupy position 0; not expressible as QFEN (one character per cell), so given as raw bitboards.",
+      "bitboards": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

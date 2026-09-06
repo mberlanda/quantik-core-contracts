@@ -132,3 +132,60 @@ There are exactly 64 action slots.
 
 When a row includes both `qfen` and `side_to_move`, validators must confirm that
 the side is consistent with the legal game state.
+
+## Terminal State
+
+A state is **terminal** when either player has completed a winning line, or
+when the side to move has **no legal moves** — in the latter case the side to
+move loses. Every state/game/adapter-facing API that reports terminal status
+(board/game objects, search engines, the portability report, and any
+`observation`/`game-result` producer) must include the no-legal-moves case as
+a loss for the side to move, not just an explicit win. A low-level function
+that checks only for a completed line (no legal-move check) must not be
+named or documented as a terminal check — name it as a win check instead
+(e.g. `check_winner`/`has_winning_line`), so callers cannot mistake a
+partial check for the full terminal contract.
+
+## Invalid-State Validation Boundaries
+
+Game-state validation is layered. Each boundary below has a required floor;
+an implementation may check more, but must not check less at its own layer,
+because a QW-001 goal is generating structurally identical adapter reports.
+Golden cases for every one of these are in
+[`fixtures/invalid-states/invalid-state-v1.json`](../fixtures/invalid-states/invalid-state-v1.json)
+(`invalid-state-fixtures.v1`).
+
+**Parser boundary** (QFEN/wire string → bitboards). Structural checks only,
+always enforced, independent of any "strict" flag:
+
+- exactly 4 ranks, each exactly 4 characters (`MALFORMED_QFEN`),
+- every character is `.`, `A`-`D`, or `a`-`d` (`MALFORMED_QFEN`).
+
+The parser boundary does not check inventory, overlap, line conflicts, or
+turn balance — a QFEN string cannot encode an overlap (one character per
+cell), and the other three require counting across the whole board, which is
+the constructor boundary's job.
+
+**Constructor boundary** (bitboards → validated state). Full game-state
+validation, always enforced when a public state/board type is constructed
+from raw bitboards:
+
+- no two planes occupy the same cell (`PIECE_OVERLAP`),
+- no plane exceeds the per-shape inventory limit, 2 per shape per player
+  (`SHAPE_COUNT_EXCEEDED`),
+- player piece-count difference is `0` or `1` (`TURN_BALANCE_INVALID`),
+- no row/column/region holds the same shape from both players
+  (`ILLEGAL_PLACEMENT`).
+
+**Adapter/portability-report boundary.** The same four checks as the
+constructor boundary, applied unconditionally — an adapter must never accept
+a state its own language's constructor would reject. This closes a
+cross-stack gap found during QW-001: a portability-report code path that
+parses a QFEN without also running the constructor's full validation can
+silently diverge from the other language's report for the same fixture
+input.
+
+`MALFORMED_QFEN` is a parser-boundary-only outcome (no `ValidationResult`
+enum member applies, because no bitboard was ever built); the other four
+names match the shared `ValidationResult` vocabulary and must be spelled
+identically by every implementation's own validation-result type.

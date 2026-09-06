@@ -238,9 +238,26 @@ Recommended cases:
 
 ### Symmetry Fixtures
 
-Each case should include the eight transformed QFEN strings and the expected
-canonical QFEN. This removes ambiguity about transform order and lexicographic
-comparison.
+Implemented in [`fixtures/symmetry/symmetry-v1.json`](../fixtures/symmetry/symmetry-v1.json)
+(`symmetry-fixtures.v1`, see [Symmetry, Orbits, And Transposition
+Keys](symmetry-transposition.md)). Each `board_cases` entry carries the eight
+pure-geometric D4 transformed QFEN strings plus the expected canonical QFEN,
+canonical key, and orbit size; `action_remap_cases` gives explicit
+`action_index` → `expected_action_index` pairs for representative transforms,
+including a non-identity shape permutation and a combined D4 + shape-perm
+transform, so transform order and the action-index remap are unambiguous
+across languages.
+
+### Invalid-State Fixtures
+
+Implemented in
+[`fixtures/invalid-states/invalid-state-v1.json`](../fixtures/invalid-states/invalid-state-v1.json)
+(`invalid-state-fixtures.v1`). Each case names the boundary that must reject
+it (`parser` or `constructor`) and the expected rejection reason, covering
+malformed QFEN, turn-balance mismatch, shape-count exhaustion, cross-player
+same-shape line conflicts, and piece overlap (given as raw bitboards, since
+overlap is not expressible in QFEN). See [Invalid-State Validation
+Boundaries](game-state.md#invalid-state-validation-boundaries).
 
 ### Artifact Fixtures
 
@@ -266,6 +283,8 @@ python3 scripts/validate_contracts.py \
   --schema-glob 'schemas/**/*.json' \
   --schema-glob 'fixtures/parquet/*.json' \
   --schema-glob 'fixtures/api-portability/*.json' \
+  --schema-glob 'fixtures/symmetry/*.json' \
+  --schema-glob 'fixtures/invalid-states/*.json' \
   --fixture-glob 'fixtures/**/*.jsonl' \
   --expected-release "$(cat VERSION)"
 

@@ -22,7 +22,7 @@ Status terms:
 | --- | --- | --- | --- |
 | `qfen.v1` | Game-state parser/encoder support | Game-state parser/encoder support | Foundational game-state contract; no standalone artifact fixture validator beyond schema and implementation tests. |
 | `bitboard.v1` | Core bitboard representation and validation support | Core bitboard representation and validation support | Foundational in-memory/wire representation; no standalone bulk artifact. |
-| `action-index.v1` | Shared `shape * 16 + position` helpers and tests | Shared `shape * 16 + position` helpers and tests | Implemented as a convention used by self-play, observations, and games. |
+| `action-index.v1` | Shared `shape * 16 + position` helpers and tests; `SymmetryHandler.remap_action_index`/`inverse_transform_index` implement the transform-aware remap contract | Shared `shape * 16 + position` helpers and tests; `symmetry::remap_action_index`/`inverse_transform_index` implement the transform-aware remap contract | Base convention plus the QW-001 transform-remap contract are implemented in both stacks; see [Symmetry, Orbits, And Transposition Keys](symmetry-transposition.md) and `fixtures/symmetry/symmetry-v1.json`. |
 | `selfplay.v1` | JSONL reader validates schema, optional release, QFEN, side-to-move, legal policy, duplicate actions, value, and the Rust-generated smoke fixture | Contract parser validates release, QFEN, side-to-move, legal policy, duplicate actions, and value; self-play builder emits release metadata and a checked-in JSONL smoke fixture | Logical JSONL fixture/debug parity is implemented across Python and Rust. Bulk training storage should use `arrow-parquet-selfplay.v1` physical columns. |
 | `tensor-board.v1` | Tensor materialization from QFEN | Core game state can derive tensors through consumers | Storage guidance / derived representation; no standalone artifact validator. |
 | `arrow-parquet-selfplay.v1` | Optional PyArrow reader/writer roundtrips real Parquet bytes, validates metadata, physical schema, bitboards, dense `policy_visits[64]`, integer value, and optional QFEN | Optional Arrow/Parquet feature reader/writer roundtrips real Parquet bytes, validates metadata, physical schema, bitboards, dense `policy_visits[64]`, integer value, and optional QFEN | Real Parquet I/O is implemented in both stacks. Metadata expectations are documented and covered by a dependency-free fixture; cross-stack file interchange fixtures are still pending. |
@@ -41,6 +41,23 @@ Status terms:
 | Training dataset view | `quantik-core-py` exposes artifact readers and tensor helpers consumed by `quantik-models-py` | Rust produces `observation.v1`, `game-result.v1`, and `selfplay.v1` rows consumed by the model repo | Implemented as a `quantik-models-py` workflow over registered artifacts, not a new contract ID. See [Training Dataset View](training-dataset-view.md). |
 
 ## Known Gaps
+
+- QW-001 added two normative fixture families that did not exist before:
+  `fixtures/symmetry/symmetry-v1.json` (canonicalization over the real
+  192-element D4 × shape-permutation group, plus explicit action-index remap
+  cases) and `fixtures/invalid-states/invalid-state-v1.json` (the required
+  checks at the parser, constructor, and adapter boundaries). See
+  [Symmetry, Orbits, And Transposition Keys](symmetry-transposition.md) and
+  [Game State Representation](game-state.md#invalid-state-validation-boundaries).
+  Prior to this, `docs/symmetry-transposition.md` documented only the 8-element
+  D4 group, while both implementations' canonical key and orbit size had
+  already shipped against the full 192-element group — the doc is now
+  corrected to match the implementations, not the other way round.
+- QW-001 discovery found Rust's state constructor (`board.rs::from_bitboard`)
+  weaker than Python's (missing overlap and line-conflict checks), and
+  Rust's portability report skipping the one function that did the full
+  check. Track the fix in the `quantik-core-rust` QW-001 handoff; once
+  landed, this bullet should be replaced with a parity confirmation.
 
 - `arrow-parquet-selfplay.v1` has real Parquet reader/writer roundtrip tests in
   both stacks, including key/value metadata checks that the physical schema is

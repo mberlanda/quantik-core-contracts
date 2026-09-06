@@ -22,6 +22,18 @@
       "schema": null,
       "docs": "docs/game-state.md"
     },
+    "symmetry_fixtures": {
+      "id": "symmetry-fixtures.v1",
+      "major": 1,
+      "schema": "schemas/symmetry-fixtures-v1.schema.json",
+      "docs": "docs/symmetry-transposition.md"
+    },
+    "invalid_state_fixtures": {
+      "id": "invalid-state-fixtures.v1",
+      "major": 1,
+      "schema": "schemas/invalid-state-fixtures-v1.schema.json",
+      "docs": "docs/game-state.md"
+    },
     "selfplay": {
       "id": "selfplay.v1",
       "major": 1,
