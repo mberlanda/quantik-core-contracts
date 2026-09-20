@@ -273,6 +273,13 @@ ENGINE_CONFIG_FIELDS = {
 }
 ENGINE_RESPONSE_REQUIRED = {"schema", "action_index", "engine_kind", "engine_version", "elapsed_ms"}
 ENGINE_RESPONSE_FIELDS = ENGINE_RESPONSE_REQUIRED | {"value", "policy"}
+ENGINE_RESPONSE_V2_SCHEMA = "engine-response.v2"
+ENGINE_RESPONSE_V2_REQUIRED = ENGINE_RESPONSE_REQUIRED | {"certainty"}
+ENGINE_RESPONSE_V2_FIELDS = ENGINE_RESPONSE_V2_REQUIRED | {
+    "value", "policy", "candidates", "pv", "engine_config",
+}
+ENGINE_CERTAINTY_VALUES = ("estimate", "proof")
+ENGINE_CANDIDATE_UNITS = ("visits", "logit", "prior", "value")
 
 
 def _expect_exact_keys(record: dict[str, Any], required: set[str], allowed: set[str]) -> None:
@@ -338,6 +345,78 @@ def validate_engine_response_row(record: dict[str, Any]) -> None:
             or any(not isinstance(p, (int, float)) or isinstance(p, bool) for p in policy)
         ):
             fail("policy must be a list of 64 numbers")
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _validate_engine_candidate(candidate: Any) -> int:
+    if not isinstance(candidate, dict):
+        fail("candidates entry must be an object")
+    _expect_exact_keys(candidate, {"action_index", "score", "unit"}, {"action_index", "score", "unit"})
+    _expect_action_index(candidate["action_index"], "candidates action_index")
+    unit = candidate["unit"]
+    if unit not in ENGINE_CANDIDATE_UNITS:
+        fail(f"candidates unit must be one of {list(ENGINE_CANDIDATE_UNITS)}")
+    score = candidate["score"]
+    if not _is_number(score):
+        fail("candidates score must be a number")
+    if unit == "visits" and (not isinstance(score, int) or score < 0):
+        fail("visits score must be a non-negative integer")
+    if unit == "prior" and not 0 <= score <= 1:
+        fail("prior score must be in [0, 1]")
+    if unit == "value" and not -1 <= score <= 1:
+        fail("value score must be in [-1, 1]")
+    return candidate["action_index"]
+
+
+def validate_engine_response_v2_row(record: dict[str, Any]) -> None:
+    """Mirror of schemas/engine-response-v2.json (stdlib only, no jsonschema).
+
+    Also checks two things JSON Schema cannot express: pv[0] equals
+    action_index, and candidate action indices are unique.
+    """
+    _expect_exact_keys(record, ENGINE_RESPONSE_V2_REQUIRED, ENGINE_RESPONSE_V2_FIELDS)
+    if record["schema"] != ENGINE_RESPONSE_V2_SCHEMA:
+        fail(f"schema must be {ENGINE_RESPONSE_V2_SCHEMA}")
+    _expect_action_index(record["action_index"], "action_index")
+    for key in ("engine_kind", "engine_version"):
+        if not isinstance(record[key], str) or not record[key]:
+            fail(f"{key} must be a non-empty string")
+    elapsed = record["elapsed_ms"]
+    if not isinstance(elapsed, int) or isinstance(elapsed, bool) or elapsed < 0:
+        fail("elapsed_ms must be a non-negative integer")
+    certainty = record["certainty"]
+    if not isinstance(certainty, str) or certainty not in ENGINE_CERTAINTY_VALUES:
+        fail(f"certainty must be one of {list(ENGINE_CERTAINTY_VALUES)}")
+    if "value" in record:
+        value = record["value"]
+        if not _is_number(value) or not -1 <= value <= 1:
+            fail("value must be a number in [-1, 1]")
+    if "policy" in record:
+        policy = record["policy"]
+        if not isinstance(policy, list) or len(policy) != 64 or not all(map(_is_number, policy)):
+            fail("policy must be a list of 64 numbers")
+    if "engine_config" in record:
+        config = record["engine_config"]
+        if not isinstance(config, str) or not config:
+            fail("engine_config must be a non-empty string")
+    if "candidates" in record:
+        candidates = record["candidates"]
+        if not isinstance(candidates, list) or not 1 <= len(candidates) <= 64:
+            fail("candidates must be a list of 1 to 64 entries")
+        actions = [_validate_engine_candidate(candidate) for candidate in candidates]
+        if len(set(actions)) != len(actions):
+            fail("candidates has duplicate action_index values")
+    if "pv" in record:
+        pv = record["pv"]
+        if not isinstance(pv, list) or not 1 <= len(pv) <= 64:
+            fail("pv must be a list of 1 to 64 action indices")
+        for index in pv:
+            _expect_action_index(index, "pv entry")
+        if pv[0] != record["action_index"]:
+            fail("pv[0] must equal action_index")
 
 
 def validate_search_summary_row(
@@ -854,6 +933,11 @@ def validate_jsonl_file(
                     validate_engine_request_row(record)
                 elif row_schema in (ENGINE_RESPONSE_SCHEMA, "quantik." + ENGINE_RESPONSE_SCHEMA):
                     validate_engine_response_row(record)
+                elif row_schema in (
+                    ENGINE_RESPONSE_V2_SCHEMA,
+                    "quantik." + ENGINE_RESPONSE_V2_SCHEMA,
+                ):
+                    validate_engine_response_v2_row(record)
                 elif row_schema == "search-summary.v1":
                     validate_search_summary_row(record, expected_contract_version)
                 else:

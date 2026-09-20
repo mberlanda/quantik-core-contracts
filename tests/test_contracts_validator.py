@@ -478,5 +478,78 @@ class EngineContractRowTests(unittest.TestCase):
         self._assert_rejected(row, "missing required fields")
 
 
+class EngineResponseV2Tests(unittest.TestCase):
+    """engine-response.v2: valid fixtures accepted, invalid cases rejected, v1 frozen."""
+
+    FIXTURE_DIR = ROOT / "fixtures" / "engine-response"
+
+    def _run(self, path: Path) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [
+                sys.executable, str(VALIDATOR), "--manifest", "contracts.json",
+                "--fixture-glob", str(path), "--expected-release", "1.3.0",
+            ],
+            cwd=ROOT, text=True, capture_output=True, check=False,
+        )
+
+    def _run_row(self, row: dict) -> subprocess.CompletedProcess:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "row.jsonl"
+            path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+            return self._run(path)
+
+    def _valid_rows(self) -> list[dict]:
+        path = self.FIXTURE_DIR / "engine-response-v2-synthetic.jsonl"
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
+    def test_valid_fixture_file_is_accepted(self) -> None:
+        result = self._run(self.FIXTURE_DIR / "engine-response-v2-synthetic.jsonl")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_valid_fixtures_cover_units_certainties_and_pv(self) -> None:
+        rows = self._valid_rows()
+        units = {c["unit"] for r in rows for c in r.get("candidates", [])}
+        self.assertEqual(units, {"visits", "logit", "prior", "value"})
+        self.assertEqual({r["certainty"] for r in rows}, {"estimate", "proof"})
+        self.assertTrue(any("pv" in r for r in rows))
+        self.assertTrue(all(r["schema"] == "engine-response.v2" for r in rows))
+
+    def test_every_invalid_case_is_rejected_with_its_message(self) -> None:
+        path = self.FIXTURE_DIR / "engine-response-v2-invalid.json"
+        cases = json.loads(path.read_text(encoding="utf-8"))["cases"]
+        self.assertGreaterEqual(len(cases), 20)
+        for case in cases:
+            with self.subTest(case=case["case_id"]):
+                result = self._run_row(case["row"])
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn(case["expected_error"], result.stderr)
+
+    def test_invalid_cases_include_the_three_required_defects(self) -> None:
+        path = self.FIXTURE_DIR / "engine-response-v2-invalid.json"
+        ids = {c["case_id"] for c in json.loads(path.read_text(encoding="utf-8"))["cases"]}
+        self.assertTrue(
+            {"missing-certainty", "certainty-third-value", "candidate-bad-unit"} <= ids
+        )
+
+    def test_v1_schema_rejects_certainty(self) -> None:
+        path = self.FIXTURE_DIR / "engine-response-v1-captured.jsonl"
+        row = json.loads(path.read_text(encoding="utf-8").splitlines()[0])
+        row["certainty"] = "estimate"
+        result = self._run_row(row)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("unknown fields", result.stderr)
+
+    def test_v2_schema_file_requires_certainty(self) -> None:
+        schema = json.loads(
+            (ROOT / "schemas" / "engine-response-v2.json").read_text(encoding="utf-8")
+        )
+        self.assertIn("certainty", schema["required"])
+        self.assertEqual(schema["properties"]["certainty"]["enum"], ["estimate", "proof"])
+        self.assertEqual(
+            schema["properties"]["candidates"]["items"]["properties"]["unit"]["enum"],
+            ["visits", "logit", "prior", "value"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,662 @@
+{
+ "description": "Rows that engine-response.v2 must reject. Each case is a valid proof row (fixtures/engine-response/engine-response-v2-synthetic.jsonl row 4) with one defect. Kept as .json, not .jsonl, so the fixture globs (which expect every row to validate) do not pick it up. Consumed by tests/test_contracts_validator.py.",
+ "cases": [
+  {
+   "case_id": "missing-certainty",
+   "expected_error": "missing required fields",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "certainty-third-value",
+   "expected_error": "certainty must be",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "likely",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "certainty-numeric",
+   "expected_error": "certainty must be",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": 0.9,
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "certainty-null",
+   "expected_error": "certainty must be",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": null,
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "certainty-wrong-case",
+   "expected_error": "certainty must be",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "Proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "v1-schema-id-with-certainty",
+   "expected_error": "unknown fields",
+   "row": {
+    "schema": "engine-response.v1",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "candidate-bad-unit",
+   "expected_error": "unit must be one of",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "probability"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "candidate-missing-unit",
+   "expected_error": "missing required fields",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "candidate-unknown-field",
+   "expected_error": "unknown fields",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value",
+      "rank": 1
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "candidate-action-out-of-range",
+   "expected_error": "0..=63",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 64,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "candidate-duplicate-action",
+   "expected_error": "duplicate",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 22,
+      "score": 0,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "candidate-visits-fractional",
+   "expected_error": "visits score must be",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1.5,
+      "unit": "visits"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "candidate-visits-negative",
+   "expected_error": "visits score must be",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": -3,
+      "unit": "visits"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "candidate-prior-above-one",
+   "expected_error": "prior score must be",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1.2,
+      "unit": "prior"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "candidate-value-below-minus-one",
+   "expected_error": "value score must be",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": -2,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "candidates-empty",
+   "expected_error": "candidates must",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "pv-empty",
+   "expected_error": "pv must",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": []
+   }
+  },
+  {
+   "case_id": "pv-first-not-action-index",
+   "expected_error": "pv[0] must equal action_index",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     40,
+     22
+    ]
+   }
+  },
+  {
+   "case_id": "pv-out-of-range",
+   "expected_error": "0..=63",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     64
+    ]
+   }
+  },
+  {
+   "case_id": "value-out-of-range",
+   "expected_error": "value must be",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1.5,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ]
+   }
+  },
+  {
+   "case_id": "engine-config-empty",
+   "expected_error": "engine_config must be",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ],
+    "engine_config": ""
+   }
+  },
+  {
+   "case_id": "engine-config-not-string",
+   "expected_error": "engine_config must be",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ],
+    "engine_config": {
+     "depth": 2
+    }
+   }
+  },
+  {
+   "case_id": "unknown-top-level-field",
+   "expected_error": "unknown fields",
+   "row": {
+    "schema": "engine-response.v2",
+    "action_index": 22,
+    "engine_kind": "oracle",
+    "engine_version": "2b35565dddc8e0f77222af2f8fcd382b013f2fee",
+    "elapsed_ms": 1840,
+    "certainty": "proof",
+    "value": 1,
+    "candidates": [
+     {
+      "action_index": 22,
+      "score": 1,
+      "unit": "value"
+     },
+     {
+      "action_index": 30,
+      "score": 1,
+      "unit": "value"
+     }
+    ],
+    "pv": [
+     22,
+     40,
+     5,
+     33
+    ],
+    "win_probability": 0.9
+   }
+  }
+ ]
+}
