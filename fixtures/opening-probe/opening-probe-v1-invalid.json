@@ -1,0 +1,1587 @@
+{
+ "description": "Rows that opening-probe.v1 validation must reject. Each is the hit-transformed-move row from opening-probe-v1-synthetic.jsonl with one defect (checksum recomputed unless the defect is the checksum). expected_error is a substring of the validator's message (the docs/opening-probe-v1.md section 5 taxonomy); header_schema_rejects marks defects that schemas/opening-probe-v1.json itself rejects. Kept as .json, not .jsonl, so the fixture globs (which expect every row to validate) do not pick it up. Consumed by tests/test_contracts_validator.py.",
+ "cases": [
+  {
+   "case_id": "corrupt-key-version-byte",
+   "expected_error": "corrupt",
+   "header_schema_rejects": false,
+   "description": "Record key byte 0 is 0x02, not 0x01.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-key-version-byte",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "feed0b15b68a313d12a6f6f0f545e6846bc965c1909a93e2da66f21abb4c0fd0"
+    },
+    "records": [
+     {
+      "key": "020200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "corrupt-key-flags-byte",
+   "expected_error": "corrupt",
+   "header_schema_rejects": false,
+   "description": "Record key byte 1 is 0x03, not FLAG_CANON 0x02 (State::unpack would not notice).",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-key-flags-byte",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "96c65d420fc0263edde998893e3413506eb8bf5e368f466dcad75c9eaa794c5e"
+    },
+    "records": [
+     {
+      "key": "010300000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "corrupt-exact-with-zero-value",
+   "expected_error": "corrupt",
+   "header_schema_rejects": false,
+   "description": "status exact with game_value 0.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-exact-with-zero-value",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "47ea19fbcf740f94a4fc5156fdb14ca9bb37dc6c782ddce11cce9e0f94ffeafa"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 0,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "corrupt-status-unknown",
+   "expected_error": "corrupt",
+   "header_schema_rejects": false,
+   "description": "status is neither exact nor bounded.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-status-unknown",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "21fe0b679056bbc7ddf0f73a4d8b9a78f556febb273d2442932ed8a1dfbe30e8"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "solved",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "corrupt-game-value-out-of-range",
+   "expected_error": "corrupt",
+   "header_schema_rejects": false,
+   "description": "game_value 2 is outside {-1, 0, 1}.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-game-value-out-of-range",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "5911d2a43445407eeffc83ece2c049382dd7c837c64c7581e32944a1058a1f77"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 2,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "corrupt-empty-actions-non-terminal",
+   "expected_error": "corrupt",
+   "header_schema_rejects": false,
+   "description": "Empty optimal_actions on a non-terminal position.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-empty-actions-non-terminal",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "54ab04ab2d010e714bf6052915d395a83535b48231a297987cfef6e702290068"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": []
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "corrupt-action-above-63",
+   "expected_error": "corrupt",
+   "header_schema_rejects": false,
+   "description": "Action 64 does not exist; the field is exactly 64 slots.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-action-above-63",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "b036b6a971217cb355f4c45c9bf2d378953aa108a60718e060af2dc88b117c0f"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       64
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "incompatible-format-major-2",
+   "expected_error": "incompatible version",
+   "header_schema_rejects": true,
+   "description": "format_major 2; never partially read.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "incompatible-format-major-2",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 2,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "b036b6a971217cb355f4c45c9bf2d378953aa108a60718e060af2dc88b117c0f"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "incompatible-schema-string",
+   "expected_error": "incompatible version",
+   "header_schema_rejects": true,
+   "description": "header schema is not opening-probe.v1.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "incompatible-schema-string",
+    "header": {
+     "schema": "opening-probe.v2",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "b036b6a971217cb355f4c45c9bf2d378953aa108a60718e060af2dc88b117c0f"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "incompatible-key-format",
+   "expected_error": "incompatible version",
+   "header_schema_rejects": true,
+   "description": "Unknown key_format.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "incompatible-key-format",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v2",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "b036b6a971217cb355f4c45c9bf2d378953aa108a60718e060af2dc88b117c0f"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "truncated-file-length",
+   "expected_error": "truncated",
+   "header_schema_rejects": false,
+   "description": "Declared file length does not match 12 + metadata_len + padding + entry_count * 28.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "truncated-file-length",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "b036b6a971217cb355f4c45c9bf2d378953aa108a60718e060af2dc88b117c0f"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ],
+    "file_length": 1000
+   }
+  },
+  {
+   "case_id": "truncated-missing-record",
+   "expected_error": "truncated",
+   "header_schema_rejects": false,
+   "description": "entry_count says 2 records, the body holds 1.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "truncated-missing-record",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 2,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 2
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "b036b6a971217cb355f4c45c9bf2d378953aa108a60718e060af2dc88b117c0f"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "checksum-mismatch",
+   "expected_error": "checksum mismatch",
+   "header_schema_rejects": false,
+   "description": "body_sha256 does not match the record region.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "checksum-mismatch",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "corrupt-record-size-not-28",
+   "expected_error": "corrupt",
+   "header_schema_rejects": true,
+   "description": "record_size must be 28.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-record-size-not-28",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 32,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "b036b6a971217cb355f4c45c9bf2d378953aa108a60718e060af2dc88b117c0f"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "corrupt-missing-mandatory-key",
+   "expected_error": "corrupt",
+   "header_schema_rejects": true,
+   "description": "Mandatory header key body_sha256 is absent.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-missing-mandatory-key",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "corrupt-unknown-header-key",
+   "expected_error": "corrupt",
+   "header_schema_rejects": true,
+   "description": "Fixture headers are closed: unknown key rejected (runtime readers ignore unknown optional keys).",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-unknown-header-key",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "b036b6a971217cb355f4c45c9bf2d378953aa108a60718e060af2dc88b117c0f",
+     "extra": 1
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "corrupt-per-ply-not-summing",
+   "expected_error": "corrupt",
+   "header_schema_rejects": false,
+   "description": "per_ply does not sum to entry_count.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-per-ply-not-summing",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 5
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "b036b6a971217cb355f4c45c9bf2d378953aa108a60718e060af2dc88b117c0f"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "corrupt-per-ply-mismatch",
+   "expected_error": "corrupt",
+   "header_schema_rejects": false,
+   "description": "per_ply sums correctly but reports the wrong ply for the record.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "corrupt-per-ply-mismatch",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 4,
+     "per_ply": [
+      {
+       "ply": 4,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "b036b6a971217cb355f4c45c9bf2d378953aa108a60718e060af2dc88b117c0f"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "unsorted-keys",
+   "expected_error": "unsorted or duplicate keys",
+   "header_schema_rejects": false,
+   "description": "Keys are descending bytewise; the checksum is valid over the unsorted table.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "unsorted-keys",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 2,
+     "ply_min": 1,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 1,
+       "entries": 1
+      },
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "9270312148fc186d28fd5353f886e1ad6187ee247b7e558145210ddab1a40ada"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     },
+     {
+      "key": "010200000000000000100000000000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       5
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "duplicate-keys",
+   "expected_error": "unsorted or duplicate keys",
+   "header_schema_rejects": false,
+   "description": "The same key appears twice.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "duplicate-keys",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 2,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 2
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "8108ab3cd61424ce71239405db7673095c80fc1f3f705178efb4c6dd72276522"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     },
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       22
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "unsorted-numeric-u16-order",
+   "expected_error": "unsorted or duplicate keys",
+   "header_schema_rejects": false,
+   "description": "Sorted by numeric u16 plane value (0x0001 then 0x0100) instead of bytewise: bytes 01 00 sort after 00 01, so a bytewise binary search would silently miss. Keys here are not canonical; only the order is under test.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "unsorted-numeric-u16-order",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 2,
+     "ply_min": 1,
+     "ply_max": 1,
+     "per_ply": [
+      {
+       "ply": 1,
+       "entries": 2
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "01a46ce758d73e12fc473c45b5da91d11c11074243c71c5cfa2599a81f57cc28"
+    },
+    "records": [
+     {
+      "key": "010201000000000000000000000000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       5
+      ]
+     },
+     {
+      "key": "010200010000000000000000000000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       5
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "transformed-95",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        42
+       ],
+       "wrong_direction_actions": [
+        37
+       ],
+       "wrong_direction_legal": false,
+       "minimiser_transform_indices": [
+        95
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "case_id": "illegal-mapped-back-action",
+   "expected_error": "illegal mapped-back action",
+   "header_schema_rejects": false,
+   "description": "The stored action is on an occupied square of the representative, so the mapped-back action is not a legal move of the caller: the orientation tripwire fires.",
+   "row": {
+    "schema": "opening-probe.v1",
+    "contract_version": "1.3.0",
+    "case_id": "illegal-mapped-back-action",
+    "header": {
+     "schema": "opening-probe.v1",
+     "format_major": 1,
+     "key_format": "canonical_key.v1",
+     "record_size": 28,
+     "entry_count": 1,
+     "ply_min": 3,
+     "ply_max": 3,
+     "per_ply": [
+      {
+       "ply": 3,
+       "entries": 1
+      }
+     ],
+     "coverage_complete": true,
+     "source_book": {
+      "book_id": "synthetic-book-a",
+      "schema": "opening-book.v1",
+      "contract_version": "1.3.0",
+      "generator": "synthetic-fixture",
+      "generator_version": "1"
+     },
+     "generator": "synthetic-fixture",
+     "generator_version": "1",
+     "contract_version": "1.3.0",
+     "created_at": "2026-09-20T00:00:00Z",
+     "body_sha256": "785e39c8da1ff65961a2d191a87f980e52b1a5b7e069882adb4b28b1fac8ef55"
+    },
+    "records": [
+     {
+      "key": "010200000000000200800000004000000000",
+      "game_value": 1,
+      "status": "exact",
+      "optimal_actions": [
+       9
+      ]
+     }
+    ],
+    "probe_cases": [
+     {
+      "case_id": "probe",
+      "caller_qfen": "..../.B../c.../A...",
+      "expected": {
+       "outcome": "hit",
+       "transform_index": 95,
+       "game_value": 1,
+       "status": "exact",
+       "actions": [
+        9
+       ]
+      }
+     }
+    ]
+   }
+  }
+ ]
+}
