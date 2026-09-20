@@ -110,6 +110,13 @@
       "schema": "schemas/engine-response-v2.json",
       "docs": "docs/engine-response-v2.md",
       "fixture_glob": "fixtures/engine-response/engine-response-v2-*.jsonl"
+    },
+    "opening_probe": {
+      "id": "opening-probe.v1",
+      "major": 1,
+      "schema": "schemas/opening-probe-v1.json",
+      "docs": "docs/opening-probe-v1.md",
+      "fixture_glob": "fixtures/opening-probe/opening-probe-v1-*.jsonl"
     }
   },
   "implementation_expectations": {
