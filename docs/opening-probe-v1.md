@@ -1,10 +1,10 @@
 # Opening Probe v1 — Design Decision Paper
 
 Status: **decided 2026-09-20: all recommendations D0-D6 accepted as written.** The
-rejected alternatives are kept below as the record of why. Nothing here is
-registered: no schema, no `contracts.json` entry, no fixtures. Once the
-decisions below are accepted, W2 turns them into `schemas/opening-probe-v1.json`,
-fixtures and validators.
+rejected alternatives are kept below as the record of why. Registered by
+QW-004/W2: `schemas/opening-probe-v1.json` (the JSON metadata header),
+the `opening_probe` entry in `contracts.json`, fixtures in `fixtures/opening-probe/`
+and a reference probe in `scripts/validate_contracts.py`.
 
 `opening-probe.v1` is a compact, read-only, engine-facing lookup artifact
 derived from an `opening-book.v1` SQLite book
@@ -585,6 +585,20 @@ contract, new fixtures, new checks) under `versioning.md:25`.
 6. Bounded/unknown hit (`bounded`, value 0) distinct from a miss.
 7. Corrupt-key-flags, truncated, unsorted, bad checksum, `format_major = 2`.
 8. A stale-book case for the opt-in `book_id` check.
+
+## Registered fixtures (W2)
+
+A probe is a binary file and fixtures are JSONL, so each row in
+`fixtures/opening-probe/opening-probe-v1-synthetic.jsonl` is a decoded description of one
+probe file: `header` (the schema object), `records` (`key` as 36 hex characters,
+`game_value`, `status` as `exact`/`bounded`, `optimal_actions` as a sorted list that
+serialises to the u64 set) and `probe_cases` (a caller QFEN and the expected hit, miss or
+error). `scripts/validate_contracts.py` serialises the records to compute `body_sha256`
+and the layout length (metadata as compact key-sorted JSON), runs the section 5 checks,
+and replays every `probe_cases` entry through a reference probe. Values are synthetic,
+not oracle output. Rows that must be rejected live in `opening-probe-v1-invalid.json`
+(not `.jsonl`, so the fixture glob does not pick them up); a truncated file is expressed
+as a declared `file_length` that disagrees with the layout.
 
 ## Follow-ups
 
