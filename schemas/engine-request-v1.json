@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mberlanda/quantik-core-contracts/schemas/engine-request-v1.json",
+  "title": "Quantik engine request v1",
+  "description": "JSON request body for asking an engine service to choose one move (engine-request.v1). Captures the format spoken by quantik-api-rust, quantik-qfen-visualizer and the quantik-models-py play service.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "qfen", "side_to_move", "legal_action_indices"],
+  "properties": {
+    "schema": { "const": "engine-request.v1" },
+    "qfen": { "type": "string", "description": "Position in QFEN (qfen.v1)." },
+    "side_to_move": { "type": "integer", "enum": [0, 1] },
+    "legal_action_indices": {
+      "type": "array",
+      "description": "Legal actions in the position, action_index = shape * 16 + position.",
+      "items": { "type": "integer", "minimum": 0, "maximum": 63 }
+    },
+    "config": { "$ref": "#/$defs/search_config" }
+  },
+  "$defs": {
+    "search_config": {
+      "type": "object",
+      "description": "Optional search knobs. Every field is optional; an engine ignores fields it has no use for.",
+      "additionalProperties": false,
+      "properties": {
+        "max_depth": { "type": "integer", "minimum": 0 },
+        "time_limit_ms": { "type": "integer", "minimum": 0 },
+        "iterations": { "type": "integer", "minimum": 0 },
+        "beam_width": { "type": "integer", "minimum": 0 },
+        "rollouts": { "type": "integer", "minimum": 0 },
+        "seed": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}
