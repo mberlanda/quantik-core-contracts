@@ -5,6 +5,8 @@ Status: **registered** — schema `schemas/engine-response-v1.json`
 
 `engine-response.v1` is the JSON body an engine service returns for
 [`engine-request.v1`](engine-request-v1.md). It captures the format actually
+emitted today; reconciling the implementations is out of scope here
+(initiative QW-019 decision D5; richer responses belong to QW-018, see v2).
 
 > **Frozen.** `engine-response.v1` is unchanged and stays valid. The extended
 > response (candidates, principal variation, required `certainty`) is registered
