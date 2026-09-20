@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mberlanda/quantik-core-contracts/schemas/engine-response-v2.json",
+  "title": "Quantik engine response v2",
+  "description": "JSON response body for an engine service's chosen move (engine-response.v2). Extends engine-response.v1 (which stays frozen) with ranked candidates, a principal variation, an optional engine_config, and a required certainty (estimate | proof) that qualifies every number in the body. See docs/engine-response-v2.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "action_index", "engine_kind", "engine_version", "elapsed_ms", "certainty"],
+  "properties": {
+    "schema": { "const": "engine-response.v2" },
+    "action_index": { "type": "integer", "minimum": 0, "maximum": 63 },
+    "engine_kind": { "type": "string", "minLength": 1 },
+    "engine_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The versioned artefact that decided the move: model_id for checkpoint-backed engines, the quantik-core revision (or installed release string) for pure-core engines. Never an opponent id or a config string. Not comparable as strings across implementations."
+    },
+    "elapsed_ms": { "type": "integer", "minimum": 0 },
+    "certainty": {
+      "enum": ["estimate", "proof"],
+      "description": "Required. 'proof' only when every number in the response is proven (exhaustive search or exact oracle); a network output, MCTS or beam value is always 'estimate'. Qualifies value, policy, every candidate score and pv."
+    },
+    "value": {
+      "type": "number",
+      "minimum": -1,
+      "maximum": 1,
+      "description": "Optional mover-relative expected result in [-1, 1]; 1 is a forced win for the side to move at the root."
+    },
+    "policy": {
+      "type": "array",
+      "description": "Optional 64-slot action-indexed prior; slot i is action i. Unchanged from v1.",
+      "minItems": 64,
+      "maxItems": 64,
+      "items": { "type": "number" }
+    },
+    "candidates": {
+      "type": "array",
+      "description": "Optional ranked subset of the legal moves, best first (rank is the array index; never re-sort across units). Not a partition of the legal set. Action indices should be unique (checked by scripts/validate_contracts.py).",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action_index", "score", "unit"],
+        "properties": {
+          "action_index": { "type": "integer", "minimum": 0, "maximum": 63 },
+          "score": { "type": "number", "description": "In the engine's own unit, not normalised." },
+          "unit": { "enum": ["visits", "logit", "prior", "value"] }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "unit": { "const": "visits" } }, "required": ["unit"] },
+            "then": { "properties": { "score": { "type": "integer", "minimum": 0 } } }
+          },
+          {
+            "if": { "properties": { "unit": { "const": "prior" } }, "required": ["unit"] },
+            "then": { "properties": { "score": { "minimum": 0, "maximum": 1 } } }
+          },
+          {
+            "if": { "properties": { "unit": { "const": "value" } }, "required": ["unit"] },
+            "then": { "properties": { "score": { "minimum": -1, "maximum": 1 } } }
+          }
+        ]
+      }
+    },
+    "pv": {
+      "type": "array",
+      "description": "Optional principal variation: flat action indices, pv[0] equals action_index (checked by scripts/validate_contracts.py), later entries alternate sides. Omitted, never empty. Inherits the response's certainty.",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": { "type": "integer", "minimum": 0, "maximum": 63 }
+    },
+    "engine_config": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional free-text strength-relevant configuration not part of the artefact (for example 'depth=2'). For humans and pooling keys: consumers key on (engine_kind, engine_version, engine_config) and never parse it."
+    }
+  }
+}

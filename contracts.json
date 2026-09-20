@@ -102,7 +102,14 @@
       "major": 1,
       "schema": "schemas/engine-response-v1.json",
       "docs": "docs/engine-response-v1.md",
-      "fixture_glob": "fixtures/engine-response/*.jsonl"
+      "fixture_glob": "fixtures/engine-response/engine-response-v1-*.jsonl"
+    },
+    "engine_response_v2": {
+      "id": "engine-response.v2",
+      "major": 2,
+      "schema": "schemas/engine-response-v2.json",
+      "docs": "docs/engine-response-v2.md",
+      "fixture_glob": "fixtures/engine-response/engine-response-v2-*.jsonl"
     }
   },
   "implementation_expectations": {
