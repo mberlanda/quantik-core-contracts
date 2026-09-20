@@ -1,6 +1,7 @@
 # Opening Probe v1 — Design Decision Paper
 
-Status: **proposal, needs human review before W2 (QW-004).** Nothing here is
+Status: **decided 2026-09-20: all recommendations D0-D6 accepted as written.** The
+rejected alternatives are kept below as the record of why. Nothing here is
 registered: no schema, no `contracts.json` entry, no fixtures. Once the
 decisions below are accepted, W2 turns them into `schemas/opening-probe-v1.json`,
 fixtures and validators.
@@ -34,43 +35,44 @@ make that easy to get silently wrong:
   (`bench/book_export.rs:121-126`) — a silent miss, not a wrong move, but it
   means the book is unusable for most real positions.
 
-## Decisions needed
+## Decisions
 
-Each item has a RECOMMENDED option; the section number is where the options,
-tradeoffs and rejected alternatives are written down.
+Each item is DECIDED 2026-09-20 (the RECOMMENDED option was accepted); the
+section number is where the options, tradeoffs and rejected alternatives are
+written down.
 
-- **D0 (section 0) Container format** — file, SQLite, KV store, or generated
+- **D0 DECIDED 2026-09-20 (section 0) Container format** — file, SQLite, KV store, or generated
   module? RECOMMENDED: single sorted fixed-record binary file with a JSON
   metadata header.
-- **D1 (section 1) Probe key** — RECOMMENDED: the 18-byte `canonical_key.v1`,
+- **D1 DECIDED 2026-09-20 (section 1) Probe key** — RECOMMENDED: the 18-byte `canonical_key.v1`,
   stored verbatim per record, sorted by unsigned bytewise order (not numeric
   `u16` order).
-- **D2 (section 2) Value and payload** — RECOMMENDED: `game_value` in
+- **D2 DECIDED 2026-09-20 (section 2) Value and payload** — RECOMMENDED: `game_value` in
   `{-1, 0, +1}` (side to move), a `status` byte (`exact`/`bounded`), and a
   64-bit set of optimal actions in the representative's frame. No visits, priors
   or Q-values. A miss is `None`; "in the book, unknown" is a hit with
   `status = bounded`, `game_value = 0`.
-- **D3 (section 3) Transform and action mapping** — RECOMMENDED: derive the
+- **D3 DECIDED 2026-09-20 (section 3) Transform and action mapping** — RECOMMENDED: derive the
   transform at probe time from the caller's position (no stored transform),
   tie-break to the lowest `transform_index`, map with
   `inverse_transform_index(t)`, and require a new
   `find_canonical_with_transform` primitive in `quantik-core`.
-- **D4 (section 4) Metadata and checksum** — RECOMMENDED: full provenance
+- **D4 DECIDED 2026-09-20 (section 4) Metadata and checksum** — RECOMMENDED: full provenance
   (source book id, generator, producer contract release), ply coverage, entry
   count, SHA-256 of the record body, verified at open. `contract_version` is
   informational here, not an equality gate.
-- **D5 (section 5) Errors** — RECOMMENDED: fail fast on everything except
+- **D5 DECIDED 2026-09-20 (section 5) Errors** — RECOMMENDED: fail fast on everything except
   "key not found" and "ply outside coverage"; add a mandatory
   legality check on the mapped-back action as an orientation tripwire.
-- **D6 (section 6) Migration** — RECOMMENDED: `opening-book.v1` and
+- **D6 DECIDED 2026-09-20 (section 6) Migration** — RECOMMENDED: `opening-book.v1` and
   `opening-book-summary.v1` keep their versions; W2 adds two clarifying
   sentences to `opening-book-v1.md` (which frame `action_index` is in; what
   `transform_id` means). No new required fields.
 
-Question decided without an obvious right answer (for the W1 handoff): **D3
+Questions decided without an obvious right answer (for the W1 handoff): **D3
 tie-breaking and D1 record-key width** (see those sections).
 
-## 0. Container format (D0)
+## 0. Container format (D0) — DECIDED 2026-09-20
 
 Options:
 
@@ -111,7 +113,7 @@ byte   19      status      u8   1 = exact, 2 = bounded
 bytes  20..28  optimal_actions  u64 LE, bit i = action i  (section 2)
 ```
 
-## 1. Probe keys (D1)
+## 1. Probe keys (D1) — DECIDED 2026-09-20
 
 The probe key is the `canonical_key.v1` defined in
 [`symmetry-transposition.md`](symmetry-transposition.md) lines 132-143: 18 bytes,
@@ -170,7 +172,7 @@ Note for W3: three separate places build this key today —
 `state.rs:67-72`, `bin/bench_bfs.rs:45-52`, `bin/book_builder.rs:68-75`. They agree
 now; W3 should route through one and W4 should pin all three with the fixture.
 
-## 2. Values and bounds (D2)
+## 2. Values and bounds (D2) — DECIDED 2026-09-20
 
 Options:
 
@@ -224,7 +226,7 @@ The current in-repo reader flattens these: `lookup_reference` returns `None` for
 unsolved rows and rows without best moves (`bench/book_export.rs:128-141`), so
 "unsolved but present" is indistinguishable from "absent".
 
-## 3. Move and action transforms (D3)
+## 3. Move and action transforms (D3) — DECIDED 2026-09-20
 
 ### 3.1 Definitions (all quoted from existing code, not new)
 
@@ -414,7 +416,7 @@ All four are symmetric images of one another because `A <-> D` is a symmetry (bo
 absent from `S`) and so is the reflection through the main diagonal (both
 pieces sit on it). The contract returns the `t = 77` result. This case exists to make Rust and Python agree, not merely be correct.
 
-## 4. Metadata (D4)
+## 4. Metadata (D4) — DECIDED 2026-09-20
 
 Goal: a stale or foreign probe is detectable, not merely wrong. The JSON header
 object holds:
@@ -477,7 +479,7 @@ make every published probe fail after the next contracts release.
 absent it means only "this file does not know". A miss outside the range is always
 "not covered".
 
-## 5. Errors (D5)
+## 5. Errors (D5) — DECIDED 2026-09-20
 
 Fail-fast is the default. Every non-miss failure is an error value, never a
 silent fallback to "no book move".
@@ -529,7 +531,7 @@ Open-time verification cost: the checksum and sortedness pass are O(n) reads of 
 file. Options for very large files are a documented `verify = false` that is an
 explicit, named opt-out and is never the default. Left to W3 to size.
 
-## 6. Migration (D6)
+## 6. Migration (D6) — DECIDED 2026-09-20
 
 Relationship: `opening-probe.v1` is **derived** from `opening-book.v1` (SQLite),
 which stays the source of truth (`opening-book-v1.md:6-9`; research
@@ -583,3 +585,22 @@ contract, new fixtures, new checks) under `versioning.md:25`.
 6. Bounded/unknown hit (`bounded`, value 0) distinct from a miss.
 7. Corrupt-key-flags, truncated, unsorted, bad checksum, `format_major = 2`.
 8. A stale-book case for the opt-in `book_id` check.
+
+## Follow-ups
+
+W2 (`quantik-core-contracts`, `feat/register-opening-probe`):
+
+- Register `opening-probe.v1`: schema, `contracts.json` entry, validator.
+- Add to `opening-book-v1.md` (D6): `action_index` on rows keyed by a canonical
+  key is in the canonical representative's orientation; optional edge
+  `transform_id` is the caller-to-representative `transform_index`.
+- Ship the probe fixtures listed above, including the section 3.5 case and a case
+  where applying `t*` instead of `inverse_transform_index(t*)` still yields a
+  legal move.
+
+W3 (`quantik-core-rust`, `feat/opening-probe`, plus `quantik-core-py`):
+
+- Add `SymmetryHandler::find_canonical_with_transform(&Bitboard) -> (Bitboard, u8)`
+  in core, lowest-`transform_index` tie-break, and a Python analogue.
+- Implement the probe with the section 5 fail-fast taxonomy, bytewise key order,
+  and the mandatory mapped-back legality check.
