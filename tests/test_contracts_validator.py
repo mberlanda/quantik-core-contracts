@@ -663,6 +663,54 @@ class OpeningProbeTests(unittest.TestCase):
                 rejected = bool(list(validator.iter_errors(case["row"]["header"])))
                 self.assertEqual(rejected, case["header_schema_rejects"])
 
+    def test_reference_legality_matches_known_legal_sets(self) -> None:
+        # Every "illegal mapped-back action" verdict rests on _legal_actions, so pin it to
+        # legal sets produced by engines (engine-request fixtures, search-summary masks).
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import validate_contracts as vc
+
+        checked = 0
+        request_path = ROOT / "fixtures" / "engine-request" / "engine-request-v1-captured.jsonl"
+        for line in request_path.read_text(encoding="utf-8").splitlines():
+            row = json.loads(line)
+            board = vc._bitboard_from_qfen(row["qfen"])
+            self.assertEqual(vc._side_to_move(board), row["side_to_move"], row["qfen"])
+            self.assertEqual(
+                sorted(vc._legal_actions(board, row["side_to_move"])),
+                row["legal_action_indices"], row["qfen"],
+            )
+            checked += 1
+        summary_path = ROOT / "fixtures" / "search-summary" / "search-summary-v1-smoke.jsonl"
+        for line in summary_path.read_text(encoding="utf-8").splitlines():
+            row = json.loads(line)
+            board = row["bitboards"]
+            mask = sum(1 << a for a in vc._legal_actions(board, vc._side_to_move(board)))
+            self.assertEqual(mask, row["legal_action_mask"], row["position_key"])
+            checked += 1
+        self.assertGreaterEqual(checked, 8)
+
+    def test_reference_legality_matches_quantik_core_when_installed(self) -> None:
+        try:
+            from quantik_core import State, generate_legal_moves_list
+        except ImportError:
+            self.skipTest("quantik_core not installed")
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import validate_contracts as vc
+
+        qfens = ["AbC./..../..../....", "A.../..../B.../...a", "..../.B../c.../A...",
+                 "B.../..../..c./....", "AB../c.../..../..d.", "..../..../..../D..."]
+        symmetry = json.loads(
+            (ROOT / "fixtures" / "symmetry" / "symmetry-v1.json").read_text(encoding="utf-8")
+        )
+        qfens += [case["qfen"] for case in symmetry["board_cases"]]
+        for qfen in qfens:
+            board = vc._bitboard_from_qfen(qfen)
+            player = vc._side_to_move(board)
+            with self.subTest(qfen=qfen):
+                engine = {m.shape * 16 + m.position
+                          for m in generate_legal_moves_list(State.from_qfen(qfen).bb, player)}
+                self.assertEqual(vc._legal_actions(board, player), engine)
+
     def test_wrong_direction_answer_is_rejected(self) -> None:
         # An implementation that applies t* instead of its inverse returns 52 (still a
         # legal move) for the wrong-direction fixture; the fixture must fail it.

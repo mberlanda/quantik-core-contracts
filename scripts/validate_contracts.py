@@ -529,10 +529,15 @@ def _legal_actions(board: list[int], player: int) -> set[int]:
         for p in range(16):
             if occupied >> p & 1:
                 continue
-            r, c = divmod(p, 4)
+            row, col = divmod(p, 4)
+            zone_row, zone_col = row // 2, col // 2  # the four 2x2 zones
             if any(
                 opponent >> q & 1
-                and (r == q // 4 or c == q % 4 or (r // 2 == q // 8 and c // 2 == q % 4 // 2))
+                and (
+                    row == q // 4
+                    or col == q % 4
+                    or (zone_row == q // 8 and zone_col == (q % 4) // 2)
+                )
                 for q in range(16)
             ):
                 continue

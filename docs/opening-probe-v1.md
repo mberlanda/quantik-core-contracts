@@ -586,19 +586,46 @@ contract, new fixtures, new checks) under `versioning.md:25`.
 7. Corrupt-key-flags, truncated, unsorted, bad checksum, `format_major = 2`.
 8. A stale-book case for the opt-in `book_id` check.
 
-## Registered fixtures (W2)
+## Fixture format (decided in W2)
+
+W1 specified the fixtures only as prose, so W2 fixed this format. It is a contract-shaping
+decision: W3 and W4 cross-produce against it, so it is written down here.
 
 A probe is a binary file and fixtures are JSONL, so each row in
 `fixtures/opening-probe/opening-probe-v1-synthetic.jsonl` is a decoded description of one
-probe file: `header` (the schema object), `records` (`key` as 36 hex characters,
-`game_value`, `status` as `exact`/`bounded`, `optimal_actions` as a sorted list that
-serialises to the u64 set) and `probe_cases` (a caller QFEN and the expected hit, miss or
-error). `scripts/validate_contracts.py` serialises the records to compute `body_sha256`
-and the layout length (metadata as compact key-sorted JSON), runs the section 5 checks,
-and replays every `probe_cases` entry through a reference probe. Values are synthetic,
-not oracle output. Rows that must be rejected live in `opening-probe-v1-invalid.json`
-(not `.jsonl`, so the fixture glob does not pick them up); a truncated file is expressed
-as a declared `file_length` that disagrees with the layout.
+probe file:
+
+- `schema` (`opening-probe.v1`), `contract_version` (equals the repository release, as for
+  every fixture), `case_id`, optional `description`.
+- `header`: the metadata object of `schemas/opening-probe-v1.json`.
+- `records`: `key` (36 lowercase hex characters, the 18-byte `canonical_key.v1`),
+  `game_value`, `status` (`exact` or `bounded`, bytes 1 and 2) and `optimal_actions` (a
+  sorted list of action indices that serialises to the u64 set), in file order.
+- `file_length` (optional): the declared total file length. It must equal
+  `12 + metadata_len`, padded to a multiple of 8, plus `entry_count * 28`, with the
+  metadata serialised as compact key-sorted JSON. A mismatch is "truncated".
+- `probe_cases` (optional): `{case_id, caller_qfen, expected, expected_book_id?}`.
+  `expected` is `{outcome: "hit", transform_index, game_value, status, actions}`,
+  `{outcome: "miss", reason: "key_absent" | "ply_outside_coverage"}` or
+  `{outcome: "error", error: <kind>}`. A hit may also carry
+  `wrong_direction_actions`, `wrong_direction_legal` and `minimiser_transform_indices`,
+  which the validator recomputes and compares.
+
+`scripts/validate_contracts.py` serialises the records to compute `body_sha256`, runs the
+section 5 checks and replays every `probe_cases` entry through a reference probe. Its
+legality generator is pinned by tests to the engine-request and search-summary fixtures
+and, when installed, to `quantik_core`. Values are synthetic, not oracle output. Rows that
+must be rejected live in `opening-probe-v1-invalid.json` (not `.jsonl`, so the fixture
+glob does not pick it up); each case names the section 5 error kind it must produce and
+whether the header schema alone rejects it.
+
+Closed schema versus tolerant readers. `schemas/opening-probe-v1.json` is closed
+(`additionalProperties: false`) so fixture headers cannot drift, while section 4 says
+runtime readers ignore unknown optional keys. Both hold: the schema governs what the
+contracts repository publishes and validates; a runtime reader must still open a file
+written by a newer builder that added an optional key. Consequently a header with an
+unknown key fails fixture validation but must not fail a runtime open. Adding a key is a
+schema change and a minor release.
 
 ## Follow-ups
 
