@@ -26,7 +26,11 @@ All five decided 2026-09-20; each recommended option was accepted as written.
 3. **`certainty` (section 3): DECIDED.** Required, `estimate | proof`. Minimax
    earns `proof` only when every score in the response is proven.
 4. **`engine_version` (section 4): DECIDED.** `model_id` for checkpoint-backed
-   engines, core revision for the rest, plus an optional `engine_config`.
+   engines; for pure-core engines the identifier of the quantik-core build that
+   ran (git revision where the server has one, installed release string where
+   not), plus an optional `engine_config`. Versions are not comparable as
+   strings across implementations; consumers key on `(engine_kind,
+   engine_version, engine_config)` and never parse or diff the version.
 5. **Compatibility (section 5): DECIDED.** Register `engine-response.v2` with
    `certainty` required; v1 stays frozen.
 
@@ -40,12 +44,15 @@ All five decided 2026-09-20; each recommended option was accepted as written.
 - **quantik-models-py:** pooling key changes from the opponent id to
   `(engine_kind, engine_version, engine_config)`; the play service sends
   `model_id` and `engine_config` per section 4.
+- **W2, documentation:** when it registers the schema, W2 moves the "Extended
+  response: design" half of this file to `docs/engine-response-v2.md`. Not
+  renamed in this PR.
 - **W4 (visualizer):** tolerate absent fields; absent `certainty` renders as
   unlabelled.
 
 ## Registered today (v1, unchanged)
 
-## Fields
+### Fields
 
 ```text
 schema           "engine-response.v1"     required
@@ -60,7 +67,7 @@ policy           64 numbers               optional
 The top level is closed (`additionalProperties: false`). `value` and `policy`
 are optional and the schema accepts their union.
 
-## Which implementation emits what
+### Which implementation emits what
 
 - `quantik-api-rust/src/lib.rs` (`MoveResponse`): the five required fields,
   plus `value` for `mcts` and `beam`. `minimax` emits no `value`.
@@ -78,14 +85,14 @@ Python service's is the mover-relative value head in `[-1, 1]`. `win_probability
 is **not** part of this response; the Python service emits it only in its
 separate `quantik-play.analysis.v1` analysis response.
 
-## Rename migration (initiative QW-019, decision D3)
+### Rename migration (initiative QW-019, decision D3)
 
 Registered as the bare `engine-response.v1`. Servers must emit the bare name
 from the release carrying the initiative. Before that both implementations
 emitted `quantik.engine-response.v1`; the fixtures were captured then, with only
 the `schema` value rewritten to the bare name.
 
-## Fixtures
+### Fixtures
 
 `fixtures/engine-response/engine-response-v1-captured.jsonl`: real responses
 from `quantik-api-rust` (minimax, mcts, beam; with and without `config`) and
@@ -349,11 +356,15 @@ defensible if the record path stays client-stamped.
 no opponent concept, and it would put a configuration name into the field
 that the packet says must identify a network.
 
-Open point inside Option A: the Python service has no git revision of
-quantik-core for classical opponents; the installed package version (a
-`quantik-core` release string) is the equivalent and is what the Python
-side should send. If that is unwanted, fall back to Option B for classical
-opponents only.
+**Resolved (part of the decision).** For pure-core engines `engine_version` is
+whatever identifies the quantik-core build that ran: the git revision where
+the server has one (the Rust gateway, `CORE_REVISION`), the installed
+`quantik-core` release string where it does not (the Python service).
+
+Consequence: `engine_version` values are **not comparable as strings across
+implementations**. A git revision and a release string name the same build
+in different vocabularies. Consumers key on `(engine_kind, engine_version,
+engine_config)` and never parse, order or diff the version.
 
 ## 5. Backward compatibility (DECIDED 2026-09-20)
 
