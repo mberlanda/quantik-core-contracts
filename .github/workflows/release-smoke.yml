@@ -19,8 +19,8 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || vars.ENABLE_RELEASE_SMOKE == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install latest Python package
@@ -39,7 +39,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || vars.ENABLE_RELEASE_SMOKE == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - name: Install latest Rust crate binary
         run: cargo install "${{ inputs['rust-crate'] || vars.RUST_CRATE || 'quantik-core' }}"

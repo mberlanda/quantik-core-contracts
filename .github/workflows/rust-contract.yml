@@ -21,11 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout caller repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: caller
       - name: Checkout contracts repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: mberlanda/quantik-core-contracts
           path: contracts
