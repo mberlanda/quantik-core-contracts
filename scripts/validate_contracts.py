@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import hashlib
 import itertools
 import json
 import re
@@ -417,6 +418,344 @@ def validate_engine_response_v2_row(record: dict[str, Any]) -> None:
             _expect_action_index(index, "pv entry")
         if pv[0] != record["action_index"]:
             fail("pv[0] must equal action_index")
+
+
+OPENING_PROBE_SCHEMA = "opening-probe.v1"
+OPENING_PROBE_ROW_REQUIRED = {"schema", "contract_version", "case_id", "header", "records"}
+OPENING_PROBE_ROW_FIELDS = OPENING_PROBE_ROW_REQUIRED | {"description", "file_length", "probe_cases"}
+OPENING_PROBE_HEADER_REQUIRED = {
+    "schema", "format_major", "key_format", "record_size", "entry_count", "ply_min",
+    "ply_max", "per_ply", "source_book", "generator", "generator_version",
+    "contract_version", "body_sha256",
+}
+OPENING_PROBE_HEADER_FIELDS = OPENING_PROBE_HEADER_REQUIRED | {"created_at", "coverage_complete"}
+OPENING_PROBE_SOURCE_BOOK_FIELDS = {
+    "book_id", "schema", "contract_version", "generator", "generator_version",
+}
+OPENING_PROBE_RECORD_FIELDS = {"key", "game_value", "status", "optimal_actions"}
+OPENING_PROBE_STATUS_CODE = {"exact": 1, "bounded": 2}
+OPENING_PROBE_RECORD_SIZE = 28
+SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
+class ProbeError(ValueError):
+    """A probe failure named by the docs/opening-probe-v1.md section 5 taxonomy."""
+
+    def __init__(self, kind: str, detail: str = "") -> None:
+        super().__init__(f"{kind}{': ' + detail if detail else ''}")
+        self.kind = kind
+
+
+def _bitboard_from_qfen(qfen: str) -> list[int]:
+    validate_qfen(qfen)
+    board = [0] * 8
+    for row, line in enumerate(qfen.split("/")):
+        for col, ch in enumerate(line):
+            if ch != ".":
+                board[(0 if ch.isupper() else 4) + "abcd".index(ch.lower())] |= 1 << (row * 4 + col)
+    return board
+
+
+def _apply_transform(board: list[int], transform_index: int) -> list[int]:
+    """Output slot k receives the D4-mapped plane that was shape perm[k] (symmetry doc)."""
+    d4, perm_index = divmod(transform_index, 24)
+    perm = SHAPE_PERM_ORDER[perm_index]
+    out = [0] * 8
+    for player in (0, 4):
+        for slot in range(4):
+            plane = board[player + perm[slot]]
+            out[player + slot] = sum(
+                1 << D4_POSITION_MAPS[d4][p] for p in range(16) if plane >> p & 1
+            )
+    return out
+
+
+def _payload(board: list[int]) -> bytes:
+    return b"".join(plane.to_bytes(2, "little") for plane in board)
+
+
+def _canonical_transforms(board: list[int]) -> tuple[bytes, list[int]]:
+    """Byte-wise least payload over the 192 transforms, and every minimiser (ascending)."""
+    images = [_payload(_apply_transform(board, t)) for t in range(192)]
+    least = min(images)
+    return least, [t for t, image in enumerate(images) if image == least]
+
+
+def _inverse_transform_index(transform_index: int) -> int:
+    d4, perm_index = divmod(transform_index, 24)
+    perm = SHAPE_PERM_ORDER[perm_index]
+    d4_inv = next(
+        e for e in range(8)
+        if all(D4_POSITION_MAPS[e][D4_POSITION_MAPS[d4][p]] == p for p in range(16))
+    )
+    return d4_inv * 24 + SHAPE_PERM_ORDER.index(tuple(perm.index(i) for i in range(4)))
+
+
+def _remap_action(action: int, transform_index: int) -> int:
+    d4, perm_index = divmod(transform_index, 24)
+    shape, position = divmod(action, 16)
+    return SHAPE_PERM_ORDER[perm_index].index(shape) * 16 + D4_POSITION_MAPS[d4][position]
+
+
+def _side_to_move(board: list[int]) -> int:
+    return sum(bin(plane).count("1") for plane in board) % 2
+
+
+def _has_completed_line(board: list[int]) -> bool:
+    lines = [[r * 4 + c for c in range(4)] for r in range(4)]
+    lines += [[r * 4 + c for r in range(4)] for c in range(4)]
+    lines += [[(r0 + r) * 4 + c0 + c for r in range(2) for c in range(2)]
+              for r0 in (0, 2) for c0 in (0, 2)]
+    for line in lines:
+        shapes = set()
+        for p in line:
+            for plane, bits in enumerate(board):
+                if bits >> p & 1:
+                    shapes.add(plane % 4)
+        if len(shapes) == 4 and all(any(bits >> p & 1 for bits in board) for p in line):
+            return True
+    return False
+
+
+def _legal_actions(board: list[int], player: int) -> set[int]:
+    occupied = 0
+    for plane in board:
+        occupied |= plane
+    actions = set()
+    for shape in range(4):
+        if bin(board[player * 4 + shape]).count("1") >= 2:
+            continue
+        opponent = board[(1 - player) * 4 + shape]
+        for p in range(16):
+            if occupied >> p & 1:
+                continue
+            r, c = divmod(p, 4)
+            if any(
+                opponent >> q & 1
+                and (r == q // 4 or c == q % 4 or (r // 2 == q // 8 and c // 2 == q % 4 // 2))
+                for q in range(16)
+            ):
+                continue
+            actions.add(shape * 16 + p)
+    return actions
+
+
+def _bitboard_from_key(key: bytes) -> list[int]:
+    return [int.from_bytes(key[2 + 2 * i:4 + 2 * i], "little") for i in range(8)]
+
+
+def _parse_probe_records(records: Any) -> list[tuple[bytes, int, str, int]]:
+    """Corrupt-record checks; returns (key, game_value, status, action_mask) tuples."""
+    if not isinstance(records, list):
+        raise ProbeError("corrupt", "records must be a list")
+    parsed = []
+    for index, record in enumerate(records):
+        where = f"record {index}"
+        if not isinstance(record, dict) or set(record) != OPENING_PROBE_RECORD_FIELDS:
+            raise ProbeError("corrupt", f"{where} must have exactly {sorted(OPENING_PROBE_RECORD_FIELDS)}")
+        key_hex = record["key"]
+        if not isinstance(key_hex, str) or not re.fullmatch(r"[0-9a-f]{36}", key_hex):
+            raise ProbeError("corrupt", f"{where} key must be 36 lowercase hex characters")
+        key = bytes.fromhex(key_hex)
+        if key[0] != 1 or key[1] != 2:
+            raise ProbeError("corrupt", f"{where} key must start with 0x01 0x02 (canonical_key.v1)")
+        value, status, actions = record["game_value"], record["status"], record["optimal_actions"]
+        if value not in (-1, 0, 1) or isinstance(value, bool) or not isinstance(value, int):
+            raise ProbeError("corrupt", f"{where} game_value must be -1, 0 or 1")
+        if status not in OPENING_PROBE_STATUS_CODE:
+            raise ProbeError("corrupt", f"{where} status must be exact or bounded")
+        if status == "exact" and value == 0:
+            raise ProbeError("corrupt", f"{where} exact requires game_value -1 or 1")
+        if (
+            not isinstance(actions, list)
+            or any(not isinstance(a, int) or isinstance(a, bool) or not 0 <= a <= 63 for a in actions)
+            or actions != sorted(set(actions))
+        ):
+            raise ProbeError("corrupt", f"{where} optimal_actions must be sorted unique indices 0..63")
+        board = _bitboard_from_key(key)
+        if not actions and not (
+            _has_completed_line(board) or not _legal_actions(board, _side_to_move(board))
+        ):
+            raise ProbeError("corrupt", f"{where} empty optimal_actions on a non-terminal position")
+        parsed.append((key, value, status, sum(1 << a for a in actions)))
+    return parsed
+
+
+def _probe_record_bytes(parsed: list[tuple[bytes, int, str, int]]) -> bytes:
+    return b"".join(
+        key + value.to_bytes(1, "little", signed=True)
+        + bytes([OPENING_PROBE_STATUS_CODE[status]]) + mask.to_bytes(8, "little")
+        for key, value, status, mask in parsed
+    )
+
+
+def _open_probe(record: dict[str, Any]) -> tuple[dict[str, Any], list[tuple[bytes, int, str, int]]]:
+    """Open-time checks in docs/opening-probe-v1.md section 5 (never partially read)."""
+    header = record["header"]
+    if not isinstance(header, dict):
+        raise ProbeError("corrupt", "header must be an object")
+    if (
+        header.get("schema") != OPENING_PROBE_SCHEMA
+        or header.get("format_major") != 1
+        or header.get("key_format") != "canonical_key.v1"
+    ):
+        raise ProbeError("incompatible version", "schema, format_major and key_format must be opening-probe.v1, 1, canonical_key.v1")
+    missing = OPENING_PROBE_HEADER_REQUIRED - set(header)
+    if missing:
+        raise ProbeError("corrupt", f"header missing mandatory keys {sorted(missing)}")
+    unknown = set(header) - OPENING_PROBE_HEADER_FIELDS
+    if unknown:
+        raise ProbeError("corrupt", f"header has unknown keys {sorted(unknown)} (fixture headers are closed)")
+    if header["record_size"] != OPENING_PROBE_RECORD_SIZE:
+        raise ProbeError("corrupt", "record_size must be 28")
+    source_book = header["source_book"]
+    if (
+        not isinstance(source_book, dict)
+        or not isinstance(source_book.get("book_id"), str)
+        or not source_book["book_id"]
+        or set(source_book) - OPENING_PROBE_SOURCE_BOOK_FIELDS
+    ):
+        raise ProbeError("corrupt", "source_book must be an object with a non-empty book_id")
+    for key in ("generator", "generator_version", "contract_version"):
+        if not isinstance(header[key], str) or not header[key]:
+            raise ProbeError("corrupt", f"header {key} must be a non-empty string")
+    for key in ("entry_count", "ply_min", "ply_max"):
+        if not isinstance(header[key], int) or isinstance(header[key], bool) or header[key] < 0:
+            raise ProbeError("corrupt", f"header {key} must be a non-negative integer")
+    if header["ply_min"] > header["ply_max"] or header["ply_max"] > 16:
+        raise ProbeError("corrupt", "ply_min must be <= ply_max <= 16")
+    per_ply = header["per_ply"]
+    if not isinstance(per_ply, list) or any(
+        not isinstance(row, dict) or set(row) != {"ply", "entries"}
+        or any(not isinstance(v, int) or isinstance(v, bool) or v < 0 for v in row.values())
+        for row in per_ply
+    ):
+        raise ProbeError("corrupt", "per_ply must be a list of {ply, entries} non-negative integers")
+    if sum(row["entries"] for row in per_ply) != header["entry_count"]:
+        raise ProbeError("corrupt", "per_ply does not sum to entry_count")
+    if not isinstance(header["body_sha256"], str) or not SHA256_HEX_RE.match(header["body_sha256"]):
+        raise ProbeError("corrupt", "body_sha256 must be 64 lowercase hex characters")
+    if "coverage_complete" in header and not isinstance(header["coverage_complete"], bool):
+        raise ProbeError("corrupt", "coverage_complete must be a boolean")
+    if "created_at" in header and not isinstance(header["created_at"], str):
+        raise ProbeError("corrupt", "created_at must be a string")
+
+    parsed = _parse_probe_records(record["records"])
+    metadata_len = len(json.dumps(header, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+    body_start = -(-(12 + metadata_len) // 8) * 8
+    expected_length = body_start + header["entry_count"] * OPENING_PROBE_RECORD_SIZE
+    declared_length = record.get("file_length", expected_length)
+    if len(parsed) != header["entry_count"] or declared_length != expected_length:
+        raise ProbeError(
+            "truncated",
+            f"entry_count {header['entry_count']}, {len(parsed)} records, "
+            f"file_length {declared_length}, layout needs {expected_length}",
+        )
+    if hashlib.sha256(_probe_record_bytes(parsed)).hexdigest() != header["body_sha256"]:
+        raise ProbeError("checksum mismatch", "body_sha256 differs from the record region")
+    keys = [entry[0] for entry in parsed]
+    if any(a >= b for a, b in zip(keys, keys[1:])):
+        raise ProbeError("unsorted or duplicate keys", "keys must be strictly ascending bytewise")
+    counts: dict[int, int] = {}
+    for key in keys:
+        ply = sum(bin(plane).count("1") for plane in _bitboard_from_key(key))
+        counts[ply] = counts.get(ply, 0) + 1
+    if {row["ply"]: row["entries"] for row in per_ply} != counts or len(per_ply) != len(counts):
+        raise ProbeError("corrupt", f"per_ply {per_ply} does not match the records' plies {counts}")
+    if any(not header["ply_min"] <= ply <= header["ply_max"] for ply in counts):
+        raise ProbeError("corrupt", "a record lies outside ply_min..ply_max")
+    return header, parsed
+
+
+def _probe_lookup(
+    header: dict[str, Any],
+    parsed: list[tuple[bytes, int, str, int]],
+    case: dict[str, Any],
+) -> dict[str, Any]:
+    """Reference probe (docs/opening-probe-v1.md section 3.2)."""
+    if "expected_book_id" in case and case["expected_book_id"] != header["source_book"]["book_id"]:
+        raise ProbeError("stale", f"expected_book_id {case['expected_book_id']!r} != source_book.book_id")
+    board = _bitboard_from_qfen(case["caller_qfen"])
+    ply = sum(bin(plane).count("1") for plane in board)
+    counts = [sum(bin(board[p * 4 + s]).count("1") for s in range(4)) for p in (0, 1)]
+    if counts[0] - counts[1] not in (0, 1) or any(
+        bin(board[p * 4 + s]).count("1") > 2 for p in (0, 1) for s in range(4)
+    ):
+        raise ProbeError("invalid caller position", case["caller_qfen"])
+    if not header["ply_min"] <= ply <= header["ply_max"]:
+        return {"outcome": "miss", "reason": "ply_outside_coverage"}
+    least, minimisers = _canonical_transforms(board)
+    key = bytes([1, 2]) + least
+    found = next((entry for entry in parsed if entry[0] == key), None)
+    if found is None:
+        return {"outcome": "miss", "reason": "key_absent"}
+    t_star = minimisers[0]
+    _, value, status, mask = found
+    back = _inverse_transform_index(t_star)
+    actions = sorted(_remap_action(a, back) for a in range(64) if mask >> a & 1)
+    legal = _legal_actions(board, _side_to_move(board))
+    illegal = [a for a in actions if a not in legal]
+    if illegal:
+        raise ProbeError("illegal mapped-back action", f"{illegal} not legal in {case['caller_qfen']}")
+    return {
+        "outcome": "hit", "transform_index": t_star, "game_value": value,
+        "status": status, "actions": actions,
+        "_wrong_direction": sorted(_remap_action(a, t_star) for a in range(64) if mask >> a & 1),
+        "_legal": legal, "_minimisers": minimisers,
+    }
+
+
+def _check_probe_case(header: dict[str, Any], parsed: list[Any], case: Any) -> None:
+    if not isinstance(case, dict):
+        fail("probe_cases entry must be an object")
+    _expect_exact_keys(
+        case, {"case_id", "caller_qfen", "expected"},
+        {"case_id", "caller_qfen", "expected", "expected_book_id"},
+    )
+    expected = case["expected"]
+    if not isinstance(expected, dict) or "outcome" not in expected:
+        fail(f"probe case {case['case_id']}: expected must be an object with outcome")
+    try:
+        result = _probe_lookup(header, parsed, case)
+    except ProbeError as exc:
+        if expected["outcome"] == "error" and expected.get("error") == exc.kind:
+            return
+        raise
+    extras = {}
+    if result["outcome"] == "hit":
+        extras = {
+            "wrong_direction_actions": result["_wrong_direction"],
+            "wrong_direction_legal": all(a in result["_legal"] for a in result["_wrong_direction"]),
+            "minimiser_transform_indices": result["_minimisers"],
+        }
+    public = {k: v for k, v in result.items() if not k.startswith("_")}
+    core = {k: v for k, v in expected.items() if k not in extras}
+    if core != public:
+        fail(f"probe case {case['case_id']}: expected {core}, reference probe returned {public}")
+    for name in set(expected) & set(extras):
+        if expected[name] != extras[name]:
+            fail(f"probe case {case['case_id']}: {name} is {extras[name]}, fixture says {expected[name]}")
+
+
+def validate_opening_probe_row(
+    record: dict[str, Any], expected_contract_version: str | None
+) -> None:
+    """One opening-probe.v1 fixture row: a decoded probe file plus lookups against it.
+
+    The header is checked against schemas/opening-probe-v1.json (stdlib mirror). The
+    remaining checks are the fail-fast taxonomy of docs/opening-probe-v1.md section 5
+    and a reference probe that maps every hit back with the inverse transform.
+    """
+    _expect_exact_keys(record, OPENING_PROBE_ROW_REQUIRED, OPENING_PROBE_ROW_FIELDS)
+    if record["schema"] != OPENING_PROBE_SCHEMA:
+        fail(f"schema must be {OPENING_PROBE_SCHEMA}")
+    if expected_contract_version is not None and record["contract_version"] != expected_contract_version:
+        fail(f"contract_version must be {expected_contract_version}")
+    if not isinstance(record["case_id"], str) or not record["case_id"]:
+        fail("case_id must be a non-empty string")
+    header, parsed = _open_probe(record)
+    for case in record.get("probe_cases", []):
+        _check_probe_case(header, parsed, case)
 
 
 def validate_search_summary_row(
@@ -938,6 +1277,8 @@ def validate_jsonl_file(
                     "quantik." + ENGINE_RESPONSE_V2_SCHEMA,
                 ):
                     validate_engine_response_v2_row(record)
+                elif row_schema == OPENING_PROBE_SCHEMA:
+                    validate_opening_probe_row(record, expected_contract_version)
                 elif row_schema == "search-summary.v1":
                     validate_search_summary_row(record, expected_contract_version)
                 else:

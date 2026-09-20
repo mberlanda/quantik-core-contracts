@@ -551,5 +551,136 @@ class EngineResponseV2Tests(unittest.TestCase):
         )
 
 
+class OpeningProbeTests(unittest.TestCase):
+    """opening-probe.v1: registered, valid fixtures accepted, invalid cases rejected."""
+
+    FIXTURE_DIR = ROOT / "fixtures" / "opening-probe"
+
+    def _run(self, path: Path) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [
+                sys.executable, str(VALIDATOR), "--manifest", "contracts.json",
+                "--fixture-glob", str(path), "--expected-release", "1.3.0",
+            ],
+            cwd=ROOT, text=True, capture_output=True, check=False,
+        )
+
+    def _run_row(self, row: dict) -> subprocess.CompletedProcess:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "row.jsonl"
+            path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+            return self._run(path)
+
+    def _valid_rows(self) -> list[dict]:
+        path = self.FIXTURE_DIR / "opening-probe-v1-synthetic.jsonl"
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
+    def _invalid_cases(self) -> list[dict]:
+        path = self.FIXTURE_DIR / "opening-probe-v1-invalid.json"
+        return json.loads(path.read_text(encoding="utf-8"))["cases"]
+
+    def test_registered_with_schema_docs_and_narrow_fixture_glob(self) -> None:
+        manifest = json.loads((ROOT / "contracts.json").read_text(encoding="utf-8"))
+        entry = manifest["contracts"]["opening_probe"]
+        self.assertEqual(entry["id"], "opening-probe.v1")
+        self.assertEqual(entry["schema"], "schemas/opening-probe-v1.json")
+        self.assertEqual(entry["docs"], "docs/opening-probe-v1.md")
+        self.assertEqual(entry["fixture_glob"], "fixtures/opening-probe/opening-probe-v1-*.jsonl")
+        self.assertTrue((ROOT / entry["schema"]).exists())
+
+    def test_schema_is_closed_and_requires_the_mandatory_header_keys(self) -> None:
+        schema = json.loads(
+            (ROOT / "schemas" / "opening-probe-v1.json").read_text(encoding="utf-8")
+        )
+        self.assertIs(schema["additionalProperties"], False)
+        self.assertEqual(
+            set(schema["required"]),
+            {
+                "schema", "format_major", "key_format", "record_size", "entry_count",
+                "ply_min", "ply_max", "per_ply", "source_book", "generator",
+                "generator_version", "contract_version", "body_sha256",
+            },
+        )
+        self.assertEqual(schema["properties"]["record_size"], {"const": 28})
+        self.assertEqual(schema["properties"]["format_major"], {"const": 1})
+
+    def test_valid_fixture_file_is_accepted(self) -> None:
+        result = self._run(self.FIXTURE_DIR / "opening-probe-v1-synthetic.jsonl")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("(5 rows)", result.stdout)
+
+    def test_valid_fixtures_cover_the_required_cases(self) -> None:
+        cases = {c["case_id"]: c["expected"] for r in self._valid_rows() for c in r["probe_cases"]}
+        self.assertEqual(cases["identity"]["transform_index"], 0)
+        self.assertEqual(cases["transformed-95"]["actions"], [42])
+        self.assertEqual(cases["tie-77"]["minimiser_transform_indices"], [77, 91, 125, 139])
+        self.assertEqual(cases["tie-77"]["actions"], [9])
+        self.assertEqual(cases["bounded-unknown"]["game_value"], 0)
+        self.assertEqual(cases["miss-key-absent"]["reason"], "key_absent")
+        self.assertEqual(cases["miss-ply-outside-coverage"]["reason"], "ply_outside_coverage")
+        self.assertEqual(cases["stale-book-id"]["error"], "stale")
+        # the case the legality tripwire cannot catch: t* instead of its inverse is legal
+        legal_wrong = cases["wrong-direction-52-is-legal"]
+        self.assertTrue(legal_wrong["wrong_direction_legal"])
+        self.assertEqual(legal_wrong["wrong_direction_actions"], [52])
+        self.assertNotEqual(legal_wrong["wrong_direction_actions"], legal_wrong["actions"])
+        # section 3.5: the wrong direction lands on an occupied square there
+        self.assertFalse(cases["transformed-95"]["wrong_direction_legal"])
+
+    def test_every_invalid_case_is_rejected_with_its_message(self) -> None:
+        cases = self._invalid_cases()
+        self.assertGreaterEqual(len(cases), 20)
+        for case in cases:
+            with self.subTest(case=case["case_id"]):
+                result = self._run_row(case["row"])
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn(case["expected_error"], result.stderr)
+
+    def test_invalid_cases_include_the_section_5_taxonomy(self) -> None:
+        errors = {c["expected_error"] for c in self._invalid_cases()}
+        self.assertEqual(
+            errors,
+            {
+                "corrupt", "truncated", "incompatible version", "checksum mismatch",
+                "unsorted or duplicate keys", "illegal mapped-back action",
+            },
+        )
+
+    def test_headers_match_the_schema_when_jsonschema_is_available(self) -> None:
+        try:
+            import jsonschema
+        except ImportError:
+            self.skipTest("jsonschema not installed; the stdlib validator mirrors the schema")
+        schema = json.loads(
+            (ROOT / "schemas" / "opening-probe-v1.json").read_text(encoding="utf-8")
+        )
+        validator = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker())
+        for row in self._valid_rows():
+            with self.subTest(row=row["case_id"]):
+                validator.validate(row["header"])
+        for case in self._invalid_cases():
+            with self.subTest(case=case["case_id"]):
+                rejected = bool(list(validator.iter_errors(case["row"]["header"])))
+                self.assertEqual(rejected, case["header_schema_rejects"])
+
+    def test_wrong_direction_answer_is_rejected(self) -> None:
+        # An implementation that applies t* instead of its inverse returns 52 (still a
+        # legal move) for the wrong-direction fixture; the fixture must fail it.
+        row = next(r for r in self._valid_rows() if r["case_id"] == "hit-wrong-direction-still-legal")
+        row["probe_cases"][0]["expected"]["actions"] = [52]
+        result = self._run_row(row)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("reference probe returned", result.stderr)
+
+    def test_engine_and_other_fixture_globs_do_not_pick_up_probe_files(self) -> None:
+        manifest = json.loads((ROOT / "contracts.json").read_text(encoding="utf-8"))
+        self.assertNotIn(
+            "fixtures/opening-probe", manifest["contracts"]["engine_response_v2"]["fixture_glob"]
+        )
+        self.assertEqual(list(self.FIXTURE_DIR.glob("*.jsonl")), [
+            self.FIXTURE_DIR / "opening-probe-v1-synthetic.jsonl"
+        ])
+
+
 if __name__ == "__main__":
     unittest.main()
