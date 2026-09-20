@@ -264,6 +264,82 @@ def _expect_unit_value(value: Any, label: str) -> None:
         fail(f"{label} must be in [-1, 1]")
 
 
+ENGINE_REQUEST_SCHEMA = "engine-request.v1"
+ENGINE_RESPONSE_SCHEMA = "engine-response.v1"
+ENGINE_REQUEST_FIELDS = {"schema", "qfen", "side_to_move", "legal_action_indices", "config"}
+ENGINE_REQUEST_REQUIRED = ENGINE_REQUEST_FIELDS - {"config"}
+ENGINE_CONFIG_FIELDS = {
+    "max_depth", "time_limit_ms", "iterations", "beam_width", "rollouts", "seed",
+}
+ENGINE_RESPONSE_REQUIRED = {"schema", "action_index", "engine_kind", "engine_version", "elapsed_ms"}
+ENGINE_RESPONSE_FIELDS = ENGINE_RESPONSE_REQUIRED | {"value", "policy"}
+
+
+def _expect_exact_keys(record: dict[str, Any], required: set[str], allowed: set[str]) -> None:
+    missing = sorted(required - record.keys())
+    if missing:
+        fail(f"missing required fields: {missing}")
+    unknown = sorted(record.keys() - allowed)
+    if unknown:
+        fail(f"unknown fields: {unknown}")
+
+
+def _expect_action_index(value: Any, label: str) -> None:
+    if not isinstance(value, int) or isinstance(value, bool) or not 0 <= value <= 63:
+        fail(f"{label} must be an integer in 0..=63")
+
+
+def validate_engine_request_row(record: dict[str, Any]) -> None:
+    """Mirror of schemas/engine-request-v1.json (stdlib only, no jsonschema)."""
+    _expect_exact_keys(record, ENGINE_REQUEST_REQUIRED, ENGINE_REQUEST_FIELDS)
+    if record["schema"] != ENGINE_REQUEST_SCHEMA:
+        fail(f"schema must be {ENGINE_REQUEST_SCHEMA}")
+    validate_qfen(record["qfen"])
+    if record["side_to_move"] not in (0, 1) or isinstance(record["side_to_move"], bool):
+        fail("side_to_move must be 0 or 1")
+    indices = record["legal_action_indices"]
+    if not isinstance(indices, list):
+        fail("legal_action_indices must be a list")
+    for index in indices:
+        _expect_action_index(index, "legal_action_indices entry")
+    config = record.get("config")
+    if config is not None:
+        if not isinstance(config, dict):
+            fail("config must be an object")
+        unknown = sorted(config.keys() - ENGINE_CONFIG_FIELDS)
+        if unknown:
+            fail(f"unknown config fields: {unknown}")
+        for key, value in config.items():
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                fail(f"config.{key} must be a non-negative integer")
+
+
+def validate_engine_response_row(record: dict[str, Any]) -> None:
+    """Mirror of schemas/engine-response-v1.json (stdlib only, no jsonschema)."""
+    _expect_exact_keys(record, ENGINE_RESPONSE_REQUIRED, ENGINE_RESPONSE_FIELDS)
+    if record["schema"] != ENGINE_RESPONSE_SCHEMA:
+        fail(f"schema must be {ENGINE_RESPONSE_SCHEMA}")
+    _expect_action_index(record["action_index"], "action_index")
+    for key in ("engine_kind", "engine_version"):
+        if not isinstance(record[key], str) or not record[key]:
+            fail(f"{key} must be a non-empty string")
+    elapsed = record["elapsed_ms"]
+    if not isinstance(elapsed, int) or isinstance(elapsed, bool) or elapsed < 0:
+        fail("elapsed_ms must be a non-negative integer")
+    if "value" in record:
+        value = record["value"]
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            fail("value must be a number")
+    if "policy" in record:
+        policy = record["policy"]
+        if (
+            not isinstance(policy, list)
+            or len(policy) != 64
+            or any(not isinstance(p, (int, float)) or isinstance(p, bool) for p in policy)
+        ):
+            fail("policy must be a list of 64 numbers")
+
+
 def validate_search_summary_row(
     record: Any, expected_contract_version: str | None
 ) -> None:
@@ -774,7 +850,11 @@ def validate_jsonl_file(
             try:
                 record = json.loads(stripped)
                 row_schema = record.get("schema") if isinstance(record, dict) else None
-                if row_schema == "search-summary.v1":
+                if row_schema in (ENGINE_REQUEST_SCHEMA, "quantik." + ENGINE_REQUEST_SCHEMA):
+                    validate_engine_request_row(record)
+                elif row_schema in (ENGINE_RESPONSE_SCHEMA, "quantik." + ENGINE_RESPONSE_SCHEMA):
+                    validate_engine_response_row(record)
+                elif row_schema == "search-summary.v1":
                     validate_search_summary_row(record, expected_contract_version)
                 else:
                     validate_selfplay_row(

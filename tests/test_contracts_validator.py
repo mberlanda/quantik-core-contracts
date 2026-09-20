@@ -407,5 +407,76 @@ class ContractsValidatorTests(unittest.TestCase):
         )
 
 
+class EngineContractRowTests(unittest.TestCase):
+    """engine-request.v1 / engine-response.v1 rows are checked, not just read."""
+
+    def _first_row(self, directory: str) -> dict:
+        path = next((ROOT / "fixtures" / directory).glob("*.jsonl"))
+        return json.loads(path.read_text(encoding="utf-8").splitlines()[0])
+
+    def _run(self, row: dict) -> subprocess.CompletedProcess:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "engine-row.jsonl"
+            path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+            return subprocess.run(
+                [
+                    sys.executable, str(VALIDATOR), "--manifest", "contracts.json",
+                    "--fixture-glob", str(path), "--expected-release", "1.3.0",
+                ],
+                cwd=ROOT, text=True, capture_output=True, check=False,
+            )
+
+    def _assert_rejected(self, row: dict, message: str) -> None:
+        result = self._run(row)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn(message, result.stderr)
+
+    def test_request_fixture_row_is_accepted(self) -> None:
+        self.assertEqual(self._run(self._first_row("engine-request")).returncode, 0)
+
+    def test_response_fixture_row_is_accepted(self) -> None:
+        self.assertEqual(self._run(self._first_row("engine-response")).returncode, 0)
+
+    def test_request_rejects_unknown_field(self) -> None:
+        row = self._first_row("engine-request")
+        row["surprise"] = 1
+        self._assert_rejected(row, "unknown fields")
+
+    def test_request_rejects_prefixed_schema_value(self) -> None:
+        row = self._first_row("engine-request")
+        row["schema"] = "quantik.engine-request.v1"
+        self._assert_rejected(row, "schema must be engine-request.v1")
+
+    def test_request_rejects_out_of_range_action(self) -> None:
+        row = self._first_row("engine-request")
+        row["legal_action_indices"] = [64]
+        self._assert_rejected(row, "0..=63")
+
+    def test_request_rejects_unknown_config_field(self) -> None:
+        row = self._first_row("engine-request")
+        row["config"] = {"depth": 3}
+        self._assert_rejected(row, "unknown config fields")
+
+    def test_response_rejects_unknown_field(self) -> None:
+        row = self._first_row("engine-response")
+        row["win_probability"] = 0.5
+        self._assert_rejected(row, "unknown fields")
+
+    def test_response_rejects_wrong_schema_value(self) -> None:
+        row = self._first_row("engine-response")
+        row["schema"] = "quantik.engine-response.v1"
+        self._assert_rejected(row, "schema must be engine-response.v1")
+
+    def test_response_rejects_short_policy(self) -> None:
+        row = self._first_row("engine-response")
+        row["policy"] = [0.0] * 63
+        self._assert_rejected(row, "policy must be a list of 64 numbers")
+
+    def test_response_rejects_missing_required_field(self) -> None:
+        row = self._first_row("engine-response")
+        del row["elapsed_ms"]
+        self._assert_rejected(row, "missing required fields")
+
+
 if __name__ == "__main__":
     unittest.main()
