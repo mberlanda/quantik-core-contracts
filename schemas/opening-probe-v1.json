@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mberlanda/quantik-core-contracts/schemas/opening-probe-v1.json",
+  "title": "Quantik opening probe v1 metadata header",
+  "description": "JSON metadata header of an opening-probe.v1 file: a sorted fixed-width binary lookup table derived from an opening-book.v1 SQLite book. File layout: 8-byte magic 'QPROBE\\x00\\x01', u32 LE metadata_len, metadata_len bytes of UTF-8 JSON (this object, keys sorted), zero padding to a multiple of 8 bytes, then entry_count records of record_size (28) bytes sorted ascending by unsigned bytewise key order. Record: bytes 0..18 canonical_key.v1 (0x01 0x02 then 8 u16 LE planes), byte 18 game_value i8 in {-1,0,1}, byte 19 status u8 (1 = exact, 2 = bounded), bytes 20..28 optimal_actions u64 LE with bit i = action i (shape*16+position) in the canonical representative's orientation. Rules JSON Schema cannot express (per_ply sums to entry_count and matches the records, ply_min <= ply_max, sorted unique keys, SHA-256 of the record region, exact implies a non-zero game_value, legality of mapped-back actions) are checked by scripts/validate_contracts.py. This schema is closed so fixture headers cannot drift; runtime readers ignore unknown optional keys (docs/opening-probe-v1.md section 4). See docs/opening-probe-v1.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "format_major",
+    "key_format",
+    "record_size",
+    "entry_count",
+    "ply_min",
+    "ply_max",
+    "per_ply",
+    "source_book",
+    "generator",
+    "generator_version",
+    "contract_version",
+    "body_sha256"
+  ],
+  "properties": {
+    "schema": { "const": "opening-probe.v1" },
+    "format_major": { "const": 1 },
+    "key_format": { "const": "canonical_key.v1" },
+    "record_size": { "const": 28 },
+    "entry_count": { "type": "integer", "minimum": 0 },
+    "ply_min": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 16,
+      "description": "Inclusive lower bound of coverage; ply = pieces on board."
+    },
+    "ply_max": { "type": "integer", "minimum": 0, "maximum": 16 },
+    "per_ply": {
+      "type": "array",
+      "description": "Entries per ply; mirrors opening-book-summary.v1 per_depth. Sums to entry_count.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ply", "entries"],
+        "properties": {
+          "ply": { "type": "integer", "minimum": 0, "maximum": 16 },
+          "entries": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "coverage_complete": {
+      "type": "boolean",
+      "description": "Optional. True: every canonical position at plies ply_min..ply_max that the source book contains is present, so a miss inside the range means the book had no such position. False or absent: a miss means only that this file does not know."
+    },
+    "source_book": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["book_id"],
+      "properties": {
+        "book_id": { "type": "string", "minLength": 1, "description": "Changes whenever the source book's nodes, edges, values, policy or annotations change; used by the opt-in stale check." },
+        "schema": { "type": "string", "minLength": 1 },
+        "contract_version": { "type": "string", "minLength": 1 },
+        "generator": { "type": "string", "minLength": 1 },
+        "generator_version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "generator": { "type": "string", "minLength": 1, "description": "Name of the probe builder." },
+    "generator_version": { "type": "string", "minLength": 1 },
+    "contract_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$",
+      "description": "Informational: the contracts release the builder validated against. Never an equality gate at runtime (fixtures excepted)."
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "body_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Hex SHA-256 of the record region, exactly entry_count * record_size bytes."
+    }
+  }
+}

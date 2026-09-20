@@ -138,6 +138,8 @@ source_confidence
 action_index = shape * 16 + position
 ```
 
+On any row keyed by a canonical key (a position's stored best moves, and `book_policy`), the stored `action_index` is in the canonical representative's orientation, not the orientation of whichever position a caller looked up. The optional edge field `transform_id` is the `transform_index` (`symmetry-transposition.md`) that maps the board reached by applying `action_index` on the parent's representative to the child's representative, that is, the caller-to-representative direction; a stored action is mapped back to the caller with the inverse of that direction (see [`opening-probe-v1.md`](opening-probe-v1.md), section 3).
+
 ### Policy
 
 Policy may be stored on edges or in a separate policy table. For each policy row:
