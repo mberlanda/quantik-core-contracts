@@ -9,12 +9,30 @@ on:
       tag:
         description: Release tag to package, for example v1.2.0.
         required: true
+      preflight_only:
+        description: >-
+          Run only the pre-tag preflight for `tag` against the selected branch
+          (the commit you intend to tag). Nothing is packaged or released.
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 jobs:
+  preflight:
+    # Run this BEFORE `git tag`: tag absent, VERSION matches, action paths exist.
+    if: github.event_name == 'workflow_dispatch' && inputs.preflight_only
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Release preflight
+        env:
+          TAG: ${{ inputs.tag }}
+        run: python3 scripts/release_preflight.py --tag "$TAG" --ref HEAD
+
   package:
+    if: github.event_name != 'workflow_dispatch' || !inputs.preflight_only
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -35,6 +53,13 @@ jobs:
           test "$(cat VERSION)" = "$version"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Release preflight (tag already cut)
+        # Assertion 1 cannot hold once the tag exists; VERSION and the action
+        # paths are re-checked at the tagged commit.
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: python3 scripts/release_preflight.py --tag "$TAG" --ref HEAD --tag-already-cut
 
       - name: Validate contract artifacts
         run: |
