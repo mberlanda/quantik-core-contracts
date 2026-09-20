@@ -8,33 +8,40 @@ Status: **registered** — schema `schemas/engine-response-v1.json`
 emitted today; reconciling the implementations is out of scope here
 (initiative QW-019 decision D5; richer responses belong to QW-018).
 
-> **Design record (QW-018 W1), proposal for human decision.** The sections
-> below "Registered today" are unchanged. Everything from "Extended response:
-> design" onward is a proposal: no schema, fixture or server implements it
-> yet (W2 to W4). Each of the five sections lists options, the rejected
-> alternatives, and a recommendation marked **RECOMMENDED**. `certainty` is
-> the one thing not up for decision.
+> **Design record (QW-018 W1), DECIDED 2026-09-20.** The sections below
+> "Registered today" are unchanged. Everything from "Extended response:
+> design" onward is the accepted design: no schema, fixture or server
+> implements it yet (W2 to W4). Each of the five sections keeps its options and
+> rejected alternatives; the option marked **RECOMMENDED** is the one that was
+> **DECIDED** on 2026-09-20 (all five recommendations accepted as written).
 
-## Decisions needed
+## Decisions
 
-1. **Candidate shape (section 1).** Per-candidate `unit` on each entry
-   (RECOMMENDED), versus one list-level unit, versus a 64-slot vector.
-2. **PV shape (section 2).** Flat `pv` array of action indices, whose first
-   element is `action_index` (RECOMMENDED), versus objects, versus QFEN lines.
-3. **When is `certainty` `proof` (section 3).** `certainty` itself is decided
-   (required, `estimate | proof`). The open question is only the assignment
-   rule for `minimax`: proof iff every score in the response is proven
-   (RECOMMENDED), versus headline-only, versus a separate solver route.
-4. **`engine_version` rule (section 4).** `model_id` for checkpoint-backed
-   engines, core revision for the rest, plus an optional `engine_config`
-   (RECOMMENDED), versus packet-strict without `engine_config`, versus the
-   status quo.
-5. **Compatibility mechanism (section 5).** A new contract id
-   `engine-response.v2` with `certainty` required, v1 frozen (RECOMMENDED),
-   versus mutating v1, versus keeping `certainty` optional in v1.
+All five decided 2026-09-20; each recommended option was accepted as written.
 
-Decision 5 is the one that can go quietly wrong: it is where "required" meets
-`docs/versioning.md`'s rule that additive fields are optional.
+1. **Candidate shape (section 1): DECIDED.** `candidates: [{action_index,
+   score, unit}]`, best first, per-candidate `unit`.
+2. **PV shape (section 2): DECIDED.** Flat `pv` array of action indices whose
+   first element is `action_index`.
+3. **`certainty` (section 3): DECIDED.** Required, `estimate | proof`. Minimax
+   earns `proof` only when every score in the response is proven.
+4. **`engine_version` (section 4): DECIDED.** `model_id` for checkpoint-backed
+   engines, core revision for the rest, plus an optional `engine_config`.
+5. **Compatibility (section 5): DECIDED.** Register `engine-response.v2` with
+   `certainty` required; v1 stays frozen.
+
+## Follow-ups
+
+- **W2 (contracts):** register `schemas/engine-response-v2.json` and fixtures;
+  v1 schema and fixtures untouched.
+- **W3 (quantik-api-rust):** core accessor exposing per-root-move minimax
+  scores (today only in `last_root_scored`, `minimax.rs:124`, `:240-251`), and
+  an MCTS visit list that is not collapsed by the transposition table.
+- **quantik-models-py:** pooling key changes from the opponent id to
+  `(engine_kind, engine_version, engine_config)`; the play service sends
+  `model_id` and `engine_config` per section 4.
+- **W4 (visualizer):** tolerate absent fields; absent `certainty` renders as
+  unlabelled.
 
 ## Registered today (v1, unchanged)
 
@@ -110,7 +117,7 @@ visualizer's `createRemoteEngine` against locally running servers.
   (`quantik-qfen-visualizer/src/engines.js:64-67`). It never checks
   `schema` and never reads `engine_version`. Any extra field is ignored.
 
-## 1. Ranked candidates and their units
+## 1. Ranked candidates and their units (DECIDED 2026-09-20)
 
 **Decided by the packet, not by this section:** scores stay in the engine's own
 units, labelled (QW-018 decisions.md D2). Not normalised.
@@ -126,7 +133,7 @@ exact values within the searched depth, not bounds, and are kept in
 the existing Python `policy` is a masked prior (fixture rows sum to about 1
 with zeros on illegal slots).
 
-**Option A: array of `{action_index, score, unit}`, best first (RECOMMENDED).**
+**Option A: array of `{action_index, score, unit}`, best first (RECOMMENDED, DECIDED).**
 
 ```json
 "candidates": [
@@ -182,9 +189,9 @@ lists need new core accessors (a public root-move score list on
 an orbit-expanding wrapper). This design does not require either to ship
 first: an engine with no candidates simply omits the field.
 
-## 2. Principal variation
+## 2. Principal variation (DECIDED 2026-09-20)
 
-**Option A: flat array of action indices, `pv` (RECOMMENDED).**
+**Option A: flat array of action indices, `pv` (RECOMMENDED, DECIDED).**
 
 ```json
 "pv": [17, 40, 5, 33]
@@ -218,9 +225,9 @@ The PV inherits the response's `certainty`: a `proof` PV is a line that
 realises the proven value; an `estimate` PV is a hunch. It carries no
 certainty of its own.
 
-## 3. `certainty`
+## 3. `certainty` (DECIDED 2026-09-20)
 
-**Decided (packet, not a recommendation):**
+**Decided (packet):**
 
 - `certainty` is a **required** top-level field of the extended response.
 - Exactly two values: `"estimate"` and `"proof"`. No third value, no number,
@@ -244,7 +251,7 @@ says a result is proven when the score is in the mate range,
 and depth 16 with no time limit always terminates on true terminal nodes
 (`MinimaxEngine::solve`, `minimax.rs:150-160`).
 
-**Option A: `proof` iff every score reported is proven (RECOMMENDED).**
+**Option A: `proof` iff every score reported is proven (RECOMMENDED, DECIDED).**
 `minimax` reports `proof` when the best move's score is mate-range or the
 search ran to terminal depth without a time cut (`solve`), **and** every
 `value`-unit candidate in the response is likewise proven; otherwise
@@ -276,7 +283,7 @@ Extra rules, all options:
 - Terminal and legal-move-free positions never reach a response
   (`lib.rs:152` and the service refuse them).
 
-## 4. `engine_version`
+## 4. `engine_version` (DECIDED 2026-09-20)
 
 **The divergence, concretely.** Rust sends the git revision of
 quantik-core, `2b35565dddc8e0f77222af2f8fcd382b013f2fee`, for every engine
@@ -303,7 +310,7 @@ Two further facts shape the rule:
   the depth.
 
 **Option A: model_id for model engines, core revision for everything else,
-plus an optional `engine_config` string (RECOMMENDED).**
+plus an optional `engine_config` string (RECOMMENDED, DECIDED).**
 
 The one rule: **`engine_version` names the versioned artefact that decided the
 move. It is the `model_id` for a checkpoint-backed engine, and the
@@ -348,7 +355,7 @@ quantik-core for classical opponents; the installed package version (a
 side should send. If that is unwanted, fall back to Option B for classical
 opponents only.
 
-## 5. Backward compatibility
+## 5. Backward compatibility (DECIDED 2026-09-20)
 
 **The tension.** `certainty` is required, but the registered v1 is closed
 (`additionalProperties: false`), lists five required fields, and the existing
@@ -359,7 +366,7 @@ fields only when optional and treats a new required field as breaking. Also,
 D3): both servers must change their `schema` string on the next release
 anyway, so there is already one coordinated cutover.
 
-**Option A: register `engine-response.v2`, v1 stays frozen (RECOMMENDED).**
+**Option A: register `engine-response.v2`, v1 stays frozen (RECOMMENDED, DECIDED).**
 
 - New schema `schemas/engine-response-v2.json` (W2), closed, `certainty`
   required, with `candidates`, `pv`, `engine_config` optional. v1 schema and
