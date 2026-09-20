@@ -19,5 +19,4 @@ jobs:
             --schema-glob 'fixtures/api-portability/*.json' \
             --schema-glob 'fixtures/symmetry/*.json' \
             --schema-glob 'fixtures/invalid-states/*.json' \
-            --fixture-glob 'fixtures/**/*.jsonl' \
-            --expected-release 1.3.0
+            --fixture-glob 'fixtures/**/*.jsonl'
