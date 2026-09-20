@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mberlanda/quantik-core-contracts/schemas/engine-response-v1.json",
+  "title": "Quantik engine response v1",
+  "description": "JSON response body for an engine service's chosen move (engine-response.v1). The optional fields are the union of what the Rust API (value) and the Python play service (value, policy) emit today.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "action_index", "engine_kind", "engine_version", "elapsed_ms"],
+  "properties": {
+    "schema": { "const": "engine-response.v1" },
+    "action_index": { "type": "integer", "minimum": 0, "maximum": 63 },
+    "engine_kind": { "type": "string", "minLength": 1 },
+    "engine_version": { "type": "string", "minLength": 1 },
+    "elapsed_ms": { "type": "integer", "minimum": 0 },
+    "value": {
+      "type": "number",
+      "description": "Optional position evaluation. Perspective and scale are implementation-defined in v1 (see docs)."
+    },
+    "policy": {
+      "type": "array",
+      "description": "Optional 64-slot action-indexed prior; slot i is action i.",
+      "minItems": 64,
+      "maxItems": 64,
+      "items": { "type": "number" }
+    }
+  }
+}

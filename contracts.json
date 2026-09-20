@@ -89,6 +89,20 @@
       "schema": "schemas/search-summary-v1.json",
       "docs": "docs/search-summary-v1.md",
       "fixture_glob": "fixtures/search-summary/*.jsonl"
+    },
+    "engine_request": {
+      "id": "engine-request.v1",
+      "major": 1,
+      "schema": "schemas/engine-request-v1.json",
+      "docs": "docs/engine-request-v1.md",
+      "fixture_glob": "fixtures/engine-request/*.jsonl"
+    },
+    "engine_response": {
+      "id": "engine-response.v1",
+      "major": 1,
+      "schema": "schemas/engine-response-v1.json",
+      "docs": "docs/engine-response-v1.md",
+      "fixture_glob": "fixtures/engine-response/*.jsonl"
     }
   },
   "implementation_expectations": {
