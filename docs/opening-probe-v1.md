@@ -411,8 +411,8 @@ t = 139 (inverse 131):  action 54  (D at 6)
 ```
 
 All four are symmetric images of one another because `A <-> D` is a symmetry (both
-absent from `S`) and so is the reflection through the main diagonal (both pieces sit on it). The contract returns the `t = 77`
-result. This case exists to make Rust and Python agree, not merely be correct.
+absent from `S`) and so is the reflection through the main diagonal (both
+pieces sit on it). The contract returns the `t = 77` result. This case exists to make Rust and Python agree, not merely be correct.
 
 ## 4. Metadata (D4)
 
