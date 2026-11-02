@@ -27,7 +27,7 @@ class ContractsValidatorTests(unittest.TestCase):
                 "--fixture-glob",
                 "fixtures/**/*.jsonl",
                 "--expected-release",
-                "1.3.0",
+                "1.4.0",
             ],
             cwd=ROOT,
             text=True,
@@ -53,7 +53,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--schema-glob",
                     str(bad_schema),
                     "--expected-release",
-                    "1.3.0",
+                    "1.4.0",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -167,7 +167,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--fixture-glob",
                     str(bad),
                     "--expected-release",
-                    "1.3.0",
+                    "1.4.0",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -220,7 +220,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--fixture-glob",
                     str(ok),
                     "--expected-release",
-                    "1.3.0",
+                    "1.4.0",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -245,8 +245,8 @@ class ContractsValidatorTests(unittest.TestCase):
         self.assertEqual(manifest["physical_schema"], "arrow-parquet-selfplay.v1")
         self.assertEqual(manifest["logical_schema"], "selfplay.v1")
         self.assertEqual(manifest["logical_contract"], "selfplay.v1")
-        self.assertEqual(manifest["contracts_release"], "1.3.0")
-        self.assertEqual(manifest["contract_version"], "1.3.0")
+        self.assertEqual(manifest["contracts_release"], "1.4.0")
+        self.assertEqual(manifest["contract_version"], "1.4.0")
 
         result = subprocess.run(
             [
@@ -257,7 +257,7 @@ class ContractsValidatorTests(unittest.TestCase):
                 "--schema-glob",
                 str(manifest_path),
                 "--expected-release",
-                "1.3.0",
+                "1.4.0",
             ],
             cwd=ROOT,
             text=True,
@@ -304,7 +304,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--schema-glob",
                     str(metadata_path),
                     "--expected-release",
-                    "1.3.0",
+                    "1.4.0",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -337,7 +337,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--schema-glob",
                     str(path),
                     "--expected-release",
-                    "1.3.0",
+                    "1.4.0",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -383,7 +383,7 @@ class ContractsValidatorTests(unittest.TestCase):
                     "--schema-glob",
                     str(path),
                     "--expected-release",
-                    "1.3.0",
+                    "1.4.0",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -421,7 +421,7 @@ class EngineContractRowTests(unittest.TestCase):
             return subprocess.run(
                 [
                     sys.executable, str(VALIDATOR), "--manifest", "contracts.json",
-                    "--fixture-glob", str(path), "--expected-release", "1.3.0",
+                    "--fixture-glob", str(path), "--expected-release", "1.4.0",
                 ],
                 cwd=ROOT, text=True, capture_output=True, check=False,
             )
@@ -487,7 +487,7 @@ class EngineResponseV2Tests(unittest.TestCase):
         return subprocess.run(
             [
                 sys.executable, str(VALIDATOR), "--manifest", "contracts.json",
-                "--fixture-glob", str(path), "--expected-release", "1.3.0",
+                "--fixture-glob", str(path), "--expected-release", "1.4.0",
             ],
             cwd=ROOT, text=True, capture_output=True, check=False,
         )
@@ -560,7 +560,7 @@ class OpeningProbeTests(unittest.TestCase):
         return subprocess.run(
             [
                 sys.executable, str(VALIDATOR), "--manifest", "contracts.json",
-                "--fixture-glob", str(path), "--expected-release", "1.3.0",
+                "--fixture-glob", str(path), "--expected-release", "1.4.0",
             ],
             cwd=ROOT, text=True, capture_output=True, check=False,
         )

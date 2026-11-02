@@ -137,7 +137,7 @@ class OpeningBookSummaryValidatorTests(unittest.TestCase):
             write_summary(rust_summary)
             write_summary(python_summary)
             python_data = json.loads(python_summary.read_text(encoding="utf-8"))
-            python_data["contract_version"] = "1.3.0"
+            python_data["contract_version"] = "1.4.0"
             python_summary.write_text(json.dumps(python_data), encoding="utf-8")
 
             result = subprocess.run(
@@ -180,7 +180,7 @@ class OpeningBookSummaryValidatorTests(unittest.TestCase):
                     "--expected-depth",
                     "4",
                     "--expected-release",
-                    "1.3.0",
+                    "1.4.0",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -189,7 +189,7 @@ class OpeningBookSummaryValidatorTests(unittest.TestCase):
             )
 
             self.assertEqual(result.returncode, 1)
-            self.assertIn("contract_version 1.2.0 does not match 1.3.0", result.stderr)
+            self.assertIn("contract_version 1.2.0 does not match 1.4.0", result.stderr)
 
 
 if __name__ == "__main__":
